@@ -1,5 +1,6 @@
 package com.mj.scorecounterrc
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,10 +30,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
@@ -41,8 +49,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mj.scorecounterrc.data.manager.ScoreManager
-import com.mj.blescorecounterremotecontroller.viewmodel.DisplayViewModel
+import com.mj.scorecounterrc.viewmodel.ScoreCounterViewModel
 import com.mj.scorecounterrc.ui.theme.CancelButtonContainerClr
 import com.mj.scorecounterrc.ui.theme.DecrementButtonContainerClr
 import com.mj.scorecounterrc.ui.theme.IncrementButtonContainerClr
@@ -52,35 +61,44 @@ import com.mj.scorecounterrc.ui.theme.RotateButtonContainerClr
 import com.mj.scorecounterrc.ui.theme.ScoreCounterRCTheme
 import com.mj.scorecounterrc.ui.theme.SwapButtonContainerClr
 import com.mj.scorecounterrc.ui.theme.TopAppBarContainerClr
+import com.mj.scorecounterrc.viewmodel.ScoreCounterEvent
 
 class MainActivity : ComponentActivity() {
 
-    private val displayViewModel: DisplayViewModel by viewModels()
+    private val scoreCounterViewModel: ScoreCounterViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             ScoreCounterRCTheme {
-                MainScreen(displayViewModel)
+                MainScreenRoot(scoreCounterViewModel)
             }
         }
     }
 }
 
+@SuppressLint("UnrememberedMutableState")
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    val displayViewModel = DisplayViewModel()
-
     ScoreCounterRCTheme {
-        MainScreen(displayViewModel)
+        MainScreen(mutableStateOf(false)) { }
     }
 }
 
 @Composable
-fun MainScreen(displayViewModel: DisplayViewModel) {
-    val isScFacingDown by displayViewModel.isFacingToTheReferee.collectAsState()
-    val score by ScoreManager.localScore.collectAsState()
+fun MainScreenRoot(scoreCounterViewModel: ScoreCounterViewModel) {
+    val isScFacingDown = scoreCounterViewModel.isScFacingToTheReferee.collectAsState()
+    val onEvent = scoreCounterViewModel::onEvent
+
+    MainScreen(isScFacingDown, onEvent)
+}
+
+@Composable
+fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEvent) -> Unit) {
+    val score by ScoreManager.localScore.collectAsStateWithLifecycle()
+    var isScoreOrScChanged by rememberSaveable { mutableStateOf(false) }
+    var areSpecialButtonsVisible by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -90,133 +108,63 @@ fun MainScreen(displayViewModel: DisplayViewModel) {
             Column(
                 modifier = Modifier.padding(innerPadding),
                 horizontalAlignment = Alignment.CenterHorizontally
-//                contentAlignment = Alignment.BottomCenter
             ) {
                 Spacer(modifier = Modifier.weight(1f))
-                Button(
+                RcButtonWithIcon(
                     onClick = { /*TODO*/ },
-                    modifier = Modifier.size(80.dp),
-                    shape = CircleShape,
-                    contentPadding = PaddingValues(0.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = RotateButtonContainerClr,
-                        contentColor = Color.White,
-                    ),
-                ) {
-                    Icon(
-                        modifier = Modifier.size(50.dp),
-                        painter = painterResource(id = R.drawable.rotate),
-                        contentDescription = "Rotate Score Counter"
-                    )
-                }
+                    modifier = Modifier.rotate(270F),
+                    containerColor = RotateButtonContainerClr,
+                    painterResourceId = R.drawable.rotate,
+                    contentDescription = "Rotate Score Counter"
+                )
                 Spacer(modifier = Modifier.size(50.dp))
-                Button(
+                RcButtonWithIcon(
                     onClick = { /*TODO*/ },
-                    modifier = Modifier.size(80.dp),
-                    shape = CircleShape,
-                    contentPadding = PaddingValues(0.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SwapButtonContainerClr,
-                        contentColor = Color.White,
-                    ),
-                ) {
-                    Icon(
-                        modifier = Modifier.size(50.dp),
-                        painter = painterResource(id = R.drawable.swap),
-                        contentDescription = "Swap"
-                    )
-                }
+                    containerColor = SwapButtonContainerClr,
+                    painterResourceId = R.drawable.swap,
+                    contentDescription = "Swap score"
+                )
                 Spacer(modifier = Modifier.size(50.dp))
                 Row {
-                    Button(
+                    RcButtonWithIcon(
                         onClick = { /*TODO*/ },
-                        modifier = Modifier.size(80.dp),
-                        shape = CircleShape,
-                        contentPadding = PaddingValues(0.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = CancelButtonContainerClr,
-                            contentColor = Color.White,
-                        ),
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(50.dp),
-                            painter = painterResource(id = R.drawable.cancel),
-                            contentDescription = "Cancel"
-                        )
-                    }
+                        containerColor = CancelButtonContainerClr,
+                        painterResourceId = R.drawable.cancel,
+                        contentDescription = "Cancel"
+                    )
                     Spacer(modifier = Modifier.size(30.dp))
-                    Button(
+                    RcButtonWithText(
                         onClick = { /*TODO*/ },
-                        modifier = Modifier.size(80.dp),
-                        shape = CircleShape,
-                        contentPadding = PaddingValues(0.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ResetButtonContainerClr,
-                            contentColor = Color.White,
-                        ),
-                    ) {
-                        Text(
-                            text = "0:0",
-                            fontSize = 26.sp,
-                        )
-                    }
+                        containerColor = ResetButtonContainerClr,
+                        text = "0:0",
+                    )
                     Spacer(modifier = Modifier.size(30.dp))
-                    Button(
+                    RcButtonWithIcon(
                         onClick = { /*TODO*/ },
-                        modifier = Modifier.size(80.dp),
-                        shape = CircleShape,
-                        contentPadding = PaddingValues(0.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = OkButtonContainerClr,
-                            contentColor = Color.White,
-                        ),
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(50.dp),
-                            painter = painterResource(id = R.drawable.check),
-                            contentDescription = "OK"
-                        )
-                    }
+                        containerColor = OkButtonContainerClr,
+                        painterResourceId = R.drawable.check,
+                        contentDescription = "OK"
+                    )
                 }
                 Spacer(modifier = Modifier.size(60.dp))
                 Row {
                     Spacer(modifier = Modifier.weight(1f))
-                    Button(
+                    RcButtonWithText(
                         onClick = { /*TODO*/ },
-                        modifier = Modifier.size(80.dp),
-                        shape = CircleShape,
-                        contentPadding = PaddingValues(0.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = IncrementButtonContainerClr,
-                            contentColor = Color.White,
-                        ),
-                    ) {
-                        Text(
-                            text = "+1",
-                            fontSize = 26.sp,
-                        )
-                    }
+                        containerColor = IncrementButtonContainerClr,
+                        text = "+1",
+                    )
                     Spacer(modifier = Modifier.size(20.dp))
-                    Button(
+                    RcButtonWithText(
                         onClick = { /*TODO*/ },
-                        modifier = Modifier.size(80.dp),
-                        shape = CircleShape,
-                        contentPadding = PaddingValues(0.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = IncrementButtonContainerClr,
-                            contentColor = Color.White,
-                        ),
-                    ) {
-                        Text(
-                            text = "+1",
-                            fontSize = 26.sp,
-                        )
-                    }
+                        containerColor = IncrementButtonContainerClr,
+                        text = "+1",
+                    )
                     Spacer(modifier = Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.size(20.dp))
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (isScFacingDown) {
+                    if (isScFacingDown.value) {
                         HorizontalDivider(
                             color = Color.Black,
                             thickness = 10.dp,
@@ -228,7 +176,7 @@ fun MainScreen(displayViewModel: DisplayViewModel) {
                         val scOrientationIconPainter: Painter
                         val orientationContentDesc: String
 
-                        if (isScFacingDown) {
+                        if (isScFacingDown.value) {
                             orientationContentDesc = "SC facing down"
                             scOrientationIconPainter = painterResource(
                                 id = R.drawable.double_arrow_down)
@@ -289,7 +237,7 @@ fun MainScreen(displayViewModel: DisplayViewModel) {
                             )
                         }
                     }
-                    if (!isScFacingDown) {
+                    if (!isScFacingDown.value) {
                         HorizontalDivider(
                             color = Color.Black,
                             thickness = 10.dp,
@@ -298,42 +246,19 @@ fun MainScreen(displayViewModel: DisplayViewModel) {
                     }
                 }
                 Spacer(modifier = Modifier.size(20.dp))
-                Row(
-//                    verticalAlignment = Alignment.Bottom,
-//                    horizontalArrangement = Arrangement.Center
-                ) {
+                Row {
                     Spacer(modifier = Modifier.weight(1f))
-                    Button(
+                    RcButtonWithText(
                         onClick = { /*TODO*/ },
-                        modifier = Modifier.size(80.dp),
-                        shape = CircleShape,
-                        contentPadding = PaddingValues(0.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = DecrementButtonContainerClr,
-                            contentColor = Color.White,
-                        ),
-                    ) {
-                        Text(
-                            text = "-1",
-                            fontSize = 26.sp,
-                        )
-                    }
+                        containerColor = DecrementButtonContainerClr,
+                        text = "-1",
+                    )
                     Spacer(modifier = Modifier.size(20.dp))
-                    Button(
+                    RcButtonWithText(
                         onClick = { /*TODO*/ },
-                        modifier = Modifier.size(80.dp),
-                        shape = CircleShape,
-                        contentPadding = PaddingValues(0.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = DecrementButtonContainerClr,
-                            contentColor = Color.White,
-                        ),
-                    ) {
-                        Text(
-                            text = "-1",
-                            fontSize = 26.sp,
-                        )
-                    }
+                        containerColor = DecrementButtonContainerClr,
+                        text = "-1",
+                    )
                     Spacer(modifier = Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.size(20.dp))
@@ -362,4 +287,65 @@ fun ScRcTopAppBar() {
             containerColor = TopAppBarContainerClr
         )
     )
+}
+
+@Composable
+fun RcButtonWithText(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    containerColor: Color,
+    text: String
+) {
+    RcButton(
+        onClick = onClick,
+        modifier = modifier,
+        containerColor = containerColor,
+    ) {
+        Text(
+            text = text,
+            fontSize = 26.sp,
+        )
+    }
+}
+
+@Composable
+fun RcButtonWithIcon(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    containerColor: Color,
+    painterResourceId: Int,
+    contentDescription: String?
+) {
+    RcButton(
+        onClick = onClick,
+        modifier = modifier,
+        containerColor = containerColor,
+    ) {
+        Icon(
+            modifier = Modifier.size(50.dp),
+            painter = painterResource(id = painterResourceId),
+            contentDescription = contentDescription
+        )
+    }
+}
+
+@Composable
+fun RcButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    containerColor: Color,
+    content: @Composable() (RowScope.() -> Unit)
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.size(80.dp),
+        shape = CircleShape,
+        contentPadding = PaddingValues(0.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = containerColor,
+            contentColor = Color.White,
+        ),
+    ) {
+        content()
+    }
 }
