@@ -1,4 +1,4 @@
-package com.mj.blescorecounterremotecontroller.data.manager
+package com.mj.scorecounterrc.data.manager
 
 import com.mj.scorecounterrc.data.model.AppCfg
 
