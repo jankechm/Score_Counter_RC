@@ -116,8 +116,10 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                 Spacer(modifier = Modifier.weight(1f))
                 RcButtonWithIcon(
                     onClick = {
-                        onEvent(ScoreCounterEvent.ToggleOrientation)
-                        areOkAndCancelButtonsVisible = true
+                        if (areSpecialButtonsVisible) {
+                            onEvent(ScoreCounterEvent.ToggleOrientation)
+                            areOkAndCancelButtonsVisible = true
+                        }
                     },
                     modifier = Modifier
                         .rotate(270f)
@@ -129,8 +131,10 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                 Spacer(modifier = Modifier.size(50.dp))
                 RcButtonWithIcon(
                     onClick = {
-                        ScoreManager.swapScore()
-                        areOkAndCancelButtonsVisible = true
+                        if (areSpecialButtonsVisible) {
+                            ScoreManager.swapScore()
+                            areOkAndCancelButtonsVisible = true
+                        }
                     },
                     modifier = Modifier.alpha(if (areSpecialButtonsVisible) 1f else 0f),
                     containerColor = SwapButtonContainerClr,
@@ -142,9 +146,11 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                 Row {
                     RcButtonWithIcon(
                         onClick = {
-                            onEvent(ScoreCounterEvent.RevertOrientation)
-                            ScoreManager.revertScore()
-                            areOkAndCancelButtonsVisible = false
+                            if (areOkAndCancelButtonsVisible) {
+                                onEvent(ScoreCounterEvent.RevertOrientation)
+                                ScoreManager.revertScore()
+                                areOkAndCancelButtonsVisible = false
+                            }
                         },
                         modifier = Modifier.alpha(if (areOkAndCancelButtonsVisible) 1f else 0f),
                         containerColor = CancelButtonContainerClr,
@@ -166,17 +172,19 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                     Spacer(modifier = Modifier.size(30.dp))
                     RcButtonWithIcon(
                         onClick = {
-                            // TODO send score to SC and watch
-                            ScoreManager.confirmNewScore(true)
-                            // TODO hide OK and Cancel button in offline mode
-                            onEvent(ScoreCounterEvent.ConfirmOrientation)
+                            if (areOkAndCancelButtonsVisible) {
+                                // TODO send score to SC and watch
+                                ScoreManager.confirmNewScore(true)
+                                // TODO hide OK and Cancel button in offline mode
+                                onEvent(ScoreCounterEvent.ConfirmOrientation)
 
-                            Timber.d("Local score timestamp: ${ScoreManager.timestamp}")
+                                Timber.d("Local score timestamp: ${ScoreManager.timestamp}")
 
-                            areOkAndCancelButtonsVisible = false
-                            areSpecialButtonsVisible = false
+                                areOkAndCancelButtonsVisible = false
+                                areSpecialButtonsVisible = false
 
-                            // TODO persist score
+                                // TODO persist score
+                            }
                         },
                         modifier = Modifier.alpha(if (areOkAndCancelButtonsVisible) 1f else 0f),
                         containerColor = OkButtonContainerClr,
