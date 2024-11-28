@@ -6,7 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -63,6 +66,7 @@ import com.mj.scorecounterrc.ui.theme.ScoreCounterRCTheme
 import com.mj.scorecounterrc.ui.theme.SwapButtonContainerClr
 import com.mj.scorecounterrc.ui.theme.TopAppBarContainerClr
 import com.mj.scorecounterrc.viewmodel.ScoreCounterEvent
+import timber.log.Timber
 
 class MainActivity : ComponentActivity() {
 
@@ -81,9 +85,9 @@ class MainActivity : ComponentActivity() {
 @SuppressLint("UnrememberedMutableState")
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun MainScreenPreview() {
     ScoreCounterRCTheme {
-        MainScreen(mutableStateOf(false)) { }
+        MainScreen(isScFacingDown = mutableStateOf(false), onEvent = {})
     }
 }
 
@@ -97,7 +101,7 @@ fun MainScreenRoot(scoreCounterViewModel: ScoreCounterViewModel) {
 
 @Composable
 fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEvent) -> Unit) {
-    var isScoreOrScChanged by rememberSaveable { mutableStateOf(false) }
+    var areOkAndCancelButtonsVisible by rememberSaveable { mutableStateOf(false) }
     var areSpecialButtonsVisible by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -111,15 +115,24 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
             ) {
                 Spacer(modifier = Modifier.weight(1f))
                 RcButtonWithIcon(
-                    onClick = { /*TODO*/ },
-                    modifier = Modifier.rotate(270F),
+                    onClick = {
+                        onEvent(ScoreCounterEvent.ToggleOrientation)
+                        areOkAndCancelButtonsVisible = true
+                    },
+                    modifier = Modifier
+                        .rotate(270f)
+                        .alpha(if (areSpecialButtonsVisible) 1f else 0f),
                     containerColor = RotateButtonContainerClr,
                     painterResourceId = R.drawable.rotate,
                     contentDescription = "Rotate Score Counter"
                 )
                 Spacer(modifier = Modifier.size(50.dp))
                 RcButtonWithIcon(
-                    onClick = { /*TODO*/ },
+                    onClick = {
+                        ScoreManager.swapScore()
+                        areOkAndCancelButtonsVisible = true
+                    },
+                    modifier = Modifier.alpha(if (areSpecialButtonsVisible) 1f else 0f),
                     containerColor = SwapButtonContainerClr,
                     painterResourceId = R.drawable.swap,
                     contentDescription = "Swap score"
@@ -128,20 +141,44 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
 
                 Row {
                     RcButtonWithIcon(
-                        onClick = { /*TODO*/ },
+                        onClick = {
+                            onEvent(ScoreCounterEvent.RevertOrientation)
+                            ScoreManager.revertScore()
+                            areOkAndCancelButtonsVisible = false
+                        },
+                        modifier = Modifier.alpha(if (areOkAndCancelButtonsVisible) 1f else 0f),
                         containerColor = CancelButtonContainerClr,
                         painterResourceId = R.drawable.cancel,
                         contentDescription = "Cancel"
                     )
                     Spacer(modifier = Modifier.size(30.dp))
                     RcButtonWithText(
-                        onClick = { /*TODO*/ },
+                        onClick = {
+                            if (areSpecialButtonsVisible) {
+                                ScoreManager.resetScore()
+                                areOkAndCancelButtonsVisible = true
+                            }
+                        },
+                        modifier = Modifier.alpha(if (areSpecialButtonsVisible) 1f else 0f),
                         containerColor = ResetButtonContainerClr,
                         text = "0:0",
                     )
                     Spacer(modifier = Modifier.size(30.dp))
                     RcButtonWithIcon(
-                        onClick = { /*TODO*/ },
+                        onClick = {
+                            // TODO send score to SC and watch
+                            ScoreManager.confirmNewScore(true)
+                            // TODO hide OK and Cancel button in offline mode
+                            onEvent(ScoreCounterEvent.ConfirmOrientation)
+
+                            Timber.d("Local score timestamp: ${ScoreManager.timestamp}")
+
+                            areOkAndCancelButtonsVisible = false
+                            areSpecialButtonsVisible = false
+
+                            // TODO persist score
+                        },
+                        modifier = Modifier.alpha(if (areOkAndCancelButtonsVisible) 1f else 0f),
                         containerColor = OkButtonContainerClr,
                         painterResourceId = R.drawable.check,
                         contentDescription = "OK"
@@ -153,13 +190,19 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                 Row {
                     Spacer(modifier = Modifier.weight(1f))
                     RcButtonWithText(
-                        onClick = { /*TODO*/ },
+                        onClick = {
+                            ScoreManager.incrementLeftScore()
+                            areOkAndCancelButtonsVisible = true
+                        },
                         containerColor = IncrementButtonContainerClr,
                         text = "+1",
                     )
                     Spacer(modifier = Modifier.size(20.dp))
                     RcButtonWithText(
-                        onClick = { /*TODO*/ },
+                        onClick = {
+                            ScoreManager.incrementRightScore()
+                            areOkAndCancelButtonsVisible = true
+                        },
                         containerColor = IncrementButtonContainerClr,
                         text = "+1",
                     )
@@ -167,19 +210,29 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                 }
 
                 Spacer(modifier = Modifier.size(20.dp))
-                ScoreCounter(isScFacingDown)
+                ScoreCounter(
+                    isScFacingDown = isScFacingDown,
+                    toggleSpecialButtons = {
+                        areSpecialButtonsVisible = !areSpecialButtonsVisible
+                    })
                 Spacer(modifier = Modifier.size(20.dp))
 
                 Row {
                     Spacer(modifier = Modifier.weight(1f))
                     RcButtonWithText(
-                        onClick = { /*TODO*/ },
+                        onClick = {
+                            ScoreManager.decrementLeftScore()
+                            areOkAndCancelButtonsVisible = true
+                        },
                         containerColor = DecrementButtonContainerClr,
                         text = "-1",
                     )
                     Spacer(modifier = Modifier.size(20.dp))
                     RcButtonWithText(
-                        onClick = { /*TODO*/ },
+                        onClick = {
+                            ScoreManager.decrementRightScore()
+                            areOkAndCancelButtonsVisible = true
+                        },
                         containerColor = DecrementButtonContainerClr,
                         text = "-1",
                     )
@@ -192,7 +245,7 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
 }
 
 @Composable
-fun ScoreCounter(isScFacingDown: State<Boolean>) {
+fun ScoreCounter(isScFacingDown: State<Boolean>, toggleSpecialButtons: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         if (isScFacingDown.value) {
             ScoreCounterBack()
@@ -227,8 +280,8 @@ fun ScoreCounter(isScFacingDown: State<Boolean>) {
                 )
             }
 
-            ScoreCounterText(ScoreSide.LEFT)
-            ScoreCounterText(ScoreSide.RIGHT)
+            ScoreCounterText(ScoreSide.LEFT, toggleSpecialButtons)
+            ScoreCounterText(ScoreSide.RIGHT, toggleSpecialButtons)
 
             Box(
                 modifier = Modifier
@@ -252,15 +305,23 @@ fun ScoreCounter(isScFacingDown: State<Boolean>) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ScoreCounterText(scoreSide: ScoreSide) {
+fun ScoreCounterText(scoreSide: ScoreSide, toggleSpecialButtons: () -> Unit) {
     val score by ScoreManager.localScore.collectAsStateWithLifecycle()
 
     Text(
         modifier = Modifier
             .size(110.dp, 94.dp)
             .border(border = BorderStroke(4.dp, Color.Black))
-            .wrapContentHeight(align = Alignment.CenterVertically),
+            .wrapContentHeight(align = Alignment.CenterVertically)
+            .combinedClickable(
+                onLongClickLabel = "Show special buttons",
+                onLongClick = {
+                    toggleSpecialButtons()
+                },
+                onClick = {}
+            ),
         text = if (scoreSide == ScoreSide.LEFT) score.left.toString()
             else score.right.toString(),
         textAlign = TextAlign.Center,
@@ -292,7 +353,10 @@ fun ScRcTopAppBar() {
                 )
             }
             IconButton(onClick = { /*TODO*/ }) {
-                Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings")
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings"
+                )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

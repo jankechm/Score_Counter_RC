@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    kotlin("plugin.serialization") version "2.1.0"
 }
 
 android {
@@ -63,7 +64,6 @@ dependencies {
     implementation("com.jakewharton.timber:timber:5.0.1")
     implementation("com.github.bastienpaulfr:Treessence:1.1.2")
     implementation("com.getpebble:pebblekit:4.0.1")
-//    implementation("androidx.compose.material3:material3-android:1.3.1")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")

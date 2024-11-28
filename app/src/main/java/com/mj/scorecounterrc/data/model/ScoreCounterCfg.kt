@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class BleDisplayCfg(
+data class ScoreCounterCfg(
     @SerialName("bright_lvl")
     var brightness: Int = 3,
     @SerialName("use_score")
