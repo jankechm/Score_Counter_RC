@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mj.scorecounterrc.data.manager.ScoreManager
+import com.mj.scorecounterrc.data.model.ScoreSide
 import com.mj.scorecounterrc.viewmodel.ScoreCounterViewModel
 import com.mj.scorecounterrc.ui.theme.CancelButtonContainerClr
 import com.mj.scorecounterrc.ui.theme.DecrementButtonContainerClr
@@ -96,7 +97,6 @@ fun MainScreenRoot(scoreCounterViewModel: ScoreCounterViewModel) {
 
 @Composable
 fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEvent) -> Unit) {
-    val score by ScoreManager.localScore.collectAsStateWithLifecycle()
     var isScoreOrScChanged by rememberSaveable { mutableStateOf(false) }
     var areSpecialButtonsVisible by remember { mutableStateOf(false) }
 
@@ -125,6 +125,7 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                     contentDescription = "Swap score"
                 )
                 Spacer(modifier = Modifier.size(50.dp))
+
                 Row {
                     RcButtonWithIcon(
                         onClick = { /*TODO*/ },
@@ -146,7 +147,9 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                         contentDescription = "OK"
                     )
                 }
+
                 Spacer(modifier = Modifier.size(60.dp))
+
                 Row {
                     Spacer(modifier = Modifier.weight(1f))
                     RcButtonWithText(
@@ -162,90 +165,11 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                     )
                     Spacer(modifier = Modifier.weight(1f))
                 }
+
                 Spacer(modifier = Modifier.size(20.dp))
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (isScFacingDown.value) {
-                        HorizontalDivider(
-                            color = Color.Black,
-                            thickness = 10.dp,
-                            modifier = Modifier.size(330.dp, 10.dp)
-                        )
-                    }
-
-                    Row {
-                        val scOrientationIconPainter: Painter
-                        val orientationContentDesc: String
-
-                        if (isScFacingDown.value) {
-                            orientationContentDesc = "SC facing down"
-                            scOrientationIconPainter = painterResource(
-                                id = R.drawable.double_arrow_down)
-                        } else {
-                            orientationContentDesc = "SC facing up"
-                            scOrientationIconPainter = painterResource(
-                                id = R.drawable.double_arrow_up)
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .size(50.dp, 94.dp)
-                                .wrapContentHeight(align = Alignment.CenterVertically)
-                        ) {
-                            Icon(
-                                modifier = Modifier
-                                    .size(50.dp)
-                                    .wrapContentHeight(align = Alignment.CenterVertically)
-                                ,
-                                painter = scOrientationIconPainter,
-                                contentDescription = orientationContentDesc
-                            )
-                        }
-                        Text(
-                            modifier = Modifier
-                                .size(110.dp, 94.dp)
-                                .border(border = BorderStroke(4.dp, Color.Black))
-                                .wrapContentHeight(align = Alignment.CenterVertically),
-                            text = score.left.toString(),
-                            textAlign = TextAlign.Center,
-                            fontSize = 38.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Serif
-                        )
-                        Text(
-                            modifier = Modifier
-                                .size(110.dp, 94.dp)
-                                .border(border = BorderStroke(4.dp, Color.Black))
-                                .wrapContentHeight(align = Alignment.CenterVertically),
-                            text = score.right.toString(),
-                            textAlign = TextAlign.Center,
-                            fontSize = 38.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Serif
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(50.dp, 94.dp)
-                                .wrapContentHeight(align = Alignment.CenterVertically)
-                        ) {
-                            Icon(
-                                modifier = Modifier
-                                    .size(50.dp)
-                                    .wrapContentHeight(align = Alignment.CenterVertically)
-                                    ,
-                                painter = painterResource(id = R.drawable.double_arrow_up),
-                                contentDescription = orientationContentDesc
-                            )
-                        }
-                    }
-                    if (!isScFacingDown.value) {
-                        HorizontalDivider(
-                            color = Color.Black,
-                            thickness = 10.dp,
-                            modifier = Modifier.size(330.dp, 10.dp)
-                        )
-                    }
-                }
+                ScoreCounter(isScFacingDown)
                 Spacer(modifier = Modifier.size(20.dp))
+
                 Row {
                     Spacer(modifier = Modifier.weight(1f))
                     RcButtonWithText(
@@ -264,6 +188,94 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                 Spacer(modifier = Modifier.size(20.dp))
             }
         }
+    )
+}
+
+@Composable
+fun ScoreCounter(isScFacingDown: State<Boolean>) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        if (isScFacingDown.value) {
+            ScoreCounterBack()
+        }
+
+        Row {
+            val scOrientationIconPainter: Painter
+            val orientationContentDesc: String
+
+            if (isScFacingDown.value) {
+                orientationContentDesc = "SC facing down"
+                scOrientationIconPainter = painterResource(
+                    id = R.drawable.double_arrow_down)
+            } else {
+                orientationContentDesc = "SC facing up"
+                scOrientationIconPainter = painterResource(
+                    id = R.drawable.double_arrow_up)
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(50.dp, 94.dp)
+                    .wrapContentHeight(align = Alignment.CenterVertically)
+            ) {
+                Icon(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .wrapContentHeight(align = Alignment.CenterVertically)
+                    ,
+                    painter = scOrientationIconPainter,
+                    contentDescription = orientationContentDesc
+                )
+            }
+
+            ScoreCounterText(ScoreSide.LEFT)
+            ScoreCounterText(ScoreSide.RIGHT)
+
+            Box(
+                modifier = Modifier
+                    .size(50.dp, 94.dp)
+                    .wrapContentHeight(align = Alignment.CenterVertically)
+            ) {
+                Icon(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .wrapContentHeight(align = Alignment.CenterVertically)
+                    ,
+                    painter = scOrientationIconPainter,
+                    contentDescription = orientationContentDesc
+                )
+            }
+        }
+
+        if (!isScFacingDown.value) {
+            ScoreCounterBack()
+        }
+    }
+}
+
+@Composable
+fun ScoreCounterText(scoreSide: ScoreSide) {
+    val score by ScoreManager.localScore.collectAsStateWithLifecycle()
+
+    Text(
+        modifier = Modifier
+            .size(110.dp, 94.dp)
+            .border(border = BorderStroke(4.dp, Color.Black))
+            .wrapContentHeight(align = Alignment.CenterVertically),
+        text = if (scoreSide == ScoreSide.LEFT) score.left.toString()
+            else score.right.toString(),
+        textAlign = TextAlign.Center,
+        fontSize = 38.sp,
+        fontWeight = FontWeight.Bold,
+        fontFamily = FontFamily.Serif
+    )
+}
+
+@Composable
+fun ScoreCounterBack() {
+    HorizontalDivider(
+        color = Color.Black,
+        thickness = 10.dp,
+        modifier = Modifier.size(330.dp, 10.dp)
     )
 }
 
