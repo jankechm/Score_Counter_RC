@@ -4,7 +4,7 @@ import android.content.Context
 import com.getpebble.android.kit.PebbleKit
 import com.getpebble.android.kit.PebbleKit.PebbleDataReceiver
 import com.getpebble.android.kit.util.PebbleDictionary
-import com.mj.scorecounterrc.listener.PebbleListener
+import com.mj.scorecounterrc.smartwatch.listener.PebbleListener
 import timber.log.Timber
 import java.lang.ref.WeakReference
 import java.util.UUID

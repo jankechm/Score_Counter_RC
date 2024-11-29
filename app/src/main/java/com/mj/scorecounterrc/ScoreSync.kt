@@ -2,13 +2,15 @@ package com.mj.scorecounterrc
 
 import android.os.Handler
 import android.os.Looper
+import com.mj.scorecounterrc.scorecounter.ScoreCounterConnectionManager
 import com.mj.scorecounterrc.data.manager.ScoreManager
 import com.mj.scorecounterrc.data.model.Score
+import com.mj.scorecounterrc.smartwatch.SmartwatchManager
 import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-class ScoreSync(val app: ScoreCounterRcApp) {
+object ScoreSync {
     private val waitingForWatchData: AtomicBoolean = AtomicBoolean(false)
     private val waitingForSCData: AtomicBoolean = AtomicBoolean(false)
 
@@ -24,12 +26,10 @@ class ScoreSync(val app: ScoreCounterRcApp) {
     private var watchTimestamp: Long = 0
     private var scoreCounterTimestamp: Long = 0
 
-    companion object {
-        const val GET_WATCH_DATA_MAX_ATTEMPTS = 2
-        const val GET_SC_DATA_MAX_ATTEMPTS = 2
-        const val GET_WATCH_DATA_TIMEOUT = 1000L
-        const val GET_SC_DATA_TIMEOUT = 1000L
-    }
+    const val GET_WATCH_DATA_MAX_ATTEMPTS = 2
+    const val GET_SC_DATA_MAX_ATTEMPTS = 2
+    const val GET_WATCH_DATA_TIMEOUT = 1000L
+    const val GET_SC_DATA_TIMEOUT = 1000L
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -40,7 +40,7 @@ class ScoreSync(val app: ScoreCounterRcApp) {
     private val getWatchDataTimerRunnable = object : Runnable {
         override fun run() {
             if (getWatchDataAttempt.getAndIncrement() < GET_WATCH_DATA_MAX_ATTEMPTS) {
-                app.sendSyncRequestToSmartwatch()
+                SmartwatchManager.sendSyncRequestToSmartwatch()
                 handler.postDelayed(this, GET_WATCH_DATA_TIMEOUT)
             }
         }
@@ -53,7 +53,7 @@ class ScoreSync(val app: ScoreCounterRcApp) {
     private val getSCDataTimerRunnable = object : Runnable {
         override fun run() {
             if (getSCDataAttempt.getAndIncrement() < GET_SC_DATA_MAX_ATTEMPTS) {
-                app.sendSyncRequestToScoreCounter()
+                ScoreCounterConnectionManager.sendSyncRequestToScoreCounter()
                 handler.postDelayed(this, GET_SC_DATA_TIMEOUT)
             }
         }
@@ -102,24 +102,24 @@ class ScoreSync(val app: ScoreCounterRcApp) {
         if (watchTimestamp >= ScoreManager.timestamp && watchTimestamp >= scoreCounterTimestamp) {
             // Smartwatch has the latest score, propagate it.
             ScoreManager.saveReceivedScore(watchScore, watchTimestamp)
-            app.sendScoreToScoreCounter(watchScore, watchTimestamp)
+            ScoreCounterConnectionManager.sendScoreToScoreCounter(watchScore, watchTimestamp)
         } else if (ScoreManager.timestamp >= watchTimestamp
             && ScoreManager.timestamp >= scoreCounterTimestamp) {
             // Smartphone has the latest score, propagate it to those, who's timestamp is not equal.
-            app.sendScoreToSmartwatch(ScoreManager.localScore.value, ScoreManager.timestamp)
+            SmartwatchManager.sendScoreToSmartwatch(ScoreManager.localScore.value, ScoreManager.timestamp)
             if (ScoreManager.timestamp > scoreCounterTimestamp) {
-                app.sendScoreToScoreCounter(ScoreManager.localScore.value, ScoreManager.timestamp)
+                ScoreCounterConnectionManager.sendScoreToScoreCounter(ScoreManager.localScore.value, ScoreManager.timestamp)
             }
         } else {
             // Score Counter has the latest score, propagate it.
             ScoreManager.saveReceivedScore(scoreCounterScore, scoreCounterTimestamp)
-            app.sendScoreToSmartwatch(scoreCounterScore, scoreCounterTimestamp)
+            SmartwatchManager.sendScoreToSmartwatch(scoreCounterScore, scoreCounterTimestamp)
         }
     }
 
     private fun syncWatchAndPhone() {
         if (ScoreManager.timestamp > watchTimestamp) {
-            app.sendScoreToSmartwatch(ScoreManager.localScore.value, ScoreManager.timestamp)
+            SmartwatchManager.sendScoreToSmartwatch(ScoreManager.localScore.value, ScoreManager.timestamp)
         } else if (ScoreManager.timestamp < watchTimestamp) {
             ScoreManager.saveReceivedScore(watchScore, watchTimestamp)
         }
@@ -127,7 +127,7 @@ class ScoreSync(val app: ScoreCounterRcApp) {
 
     private fun syncSCAndPhone() {
         if (ScoreManager.timestamp > scoreCounterTimestamp) {
-            app.sendScoreToScoreCounter(ScoreManager.localScore.value, ScoreManager.timestamp)
+            ScoreCounterConnectionManager.sendScoreToScoreCounter(ScoreManager.localScore.value, ScoreManager.timestamp)
         } else if (ScoreManager.timestamp < scoreCounterTimestamp) {
             ScoreManager.saveReceivedScore(scoreCounterScore, scoreCounterTimestamp)
         }

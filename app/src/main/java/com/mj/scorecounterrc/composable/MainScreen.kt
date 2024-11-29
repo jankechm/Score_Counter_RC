@@ -13,7 +13,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,8 +20,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mj.scorecounterrc.R
-import com.mj.scorecounterrc.data.manager.ScoreManager
 import com.mj.scorecounterrc.ui.theme.CancelButtonContainerClr
 import com.mj.scorecounterrc.ui.theme.DecrementButtonContainerClr
 import com.mj.scorecounterrc.ui.theme.IncrementButtonContainerClr
@@ -32,29 +31,31 @@ import com.mj.scorecounterrc.ui.theme.RotateButtonContainerClr
 import com.mj.scorecounterrc.ui.theme.ScoreCounterRCTheme
 import com.mj.scorecounterrc.ui.theme.SwapButtonContainerClr
 import com.mj.scorecounterrc.viewmodel.ScoreCounterEvent
+import com.mj.scorecounterrc.viewmodel.ScoreCounterState
 import com.mj.scorecounterrc.viewmodel.ScoreCounterViewModel
-import timber.log.Timber
 
 @SuppressLint("UnrememberedMutableState")
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
     ScoreCounterRCTheme {
-        MainScreen(isScFacingDown = mutableStateOf(false), onEvent = {})
+        MainScreen(isScFacingDown = mutableStateOf(false),
+            mutableStateOf(ScoreCounterState.IDLE), onEvent = {})
     }
 }
 
 @Composable
 fun MainScreenRoot(scoreCounterViewModel: ScoreCounterViewModel) {
     val isScFacingDown = scoreCounterViewModel.isScFacingToTheReferee.collectAsState()
+    val scoreCounterState = scoreCounterViewModel.scoreCounterState.collectAsStateWithLifecycle()
     val onEvent = scoreCounterViewModel::onEvent
 
-    MainScreen(isScFacingDown, onEvent)
+    MainScreen(isScFacingDown, scoreCounterState, onEvent)
 }
 
 @Composable
-fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEvent) -> Unit) {
-    var areOkAndCancelButtonsVisible by rememberSaveable { mutableStateOf(false) }
+fun MainScreen(isScFacingDown: State<Boolean>, scoreCounterState: State<ScoreCounterState>,
+               onEvent: (event: ScoreCounterEvent) -> Unit) {
     var areSpecialButtonsVisible by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -71,7 +72,6 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                     onClick = {
                         if (areSpecialButtonsVisible) {
                             onEvent(ScoreCounterEvent.ToggleOrientation)
-                            areOkAndCancelButtonsVisible = true
                         }
                     },
                     modifier = Modifier
@@ -85,8 +85,7 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                 RcButtonWithIcon(
                     onClick = {
                         if (areSpecialButtonsVisible) {
-                            ScoreManager.swapScore()
-                            areOkAndCancelButtonsVisible = true
+                            onEvent(ScoreCounterEvent.SwapScore)
                         }
                     },
                     modifier = Modifier.alpha(if (areSpecialButtonsVisible) 1f else 0f),
@@ -99,13 +98,13 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                 Row {
                     RcButtonWithIcon(
                         onClick = {
-                            if (areOkAndCancelButtonsVisible) {
-                                onEvent(ScoreCounterEvent.RevertOrientation)
-                                ScoreManager.revertScore()
-                                areOkAndCancelButtonsVisible = false
+                            if (scoreCounterState.value != ScoreCounterState.IDLE) {
+                                onEvent(ScoreCounterEvent.CancelButtonClicked)
                             }
                         },
-                        modifier = Modifier.alpha(if (areOkAndCancelButtonsVisible) 1f else 0f),
+                        modifier = Modifier
+                            .alpha(
+                                if (scoreCounterState.value != ScoreCounterState.IDLE) 1f else 0f),
                         containerColor = CancelButtonContainerClr,
                         painterResourceId = R.drawable.cancel,
                         contentDescription = "Cancel"
@@ -114,8 +113,7 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                     RcButtonWithText(
                         onClick = {
                             if (areSpecialButtonsVisible) {
-                                ScoreManager.resetScore()
-                                areOkAndCancelButtonsVisible = true
+                                onEvent(ScoreCounterEvent.ResetButtonClicked)
                             }
                         },
                         modifier = Modifier.alpha(if (areSpecialButtonsVisible) 1f else 0f),
@@ -125,21 +123,13 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                     Spacer(modifier = Modifier.size(30.dp))
                     RcButtonWithIcon(
                         onClick = {
-                            if (areOkAndCancelButtonsVisible) {
-                                // TODO send score to SC and watch
-                                ScoreManager.confirmNewScore(true)
-                                // TODO hide OK and Cancel button in offline mode
-                                onEvent(ScoreCounterEvent.ConfirmOrientation)
-
-                                Timber.d("Local score timestamp: ${ScoreManager.timestamp}")
-
-                                areOkAndCancelButtonsVisible = false
-                                areSpecialButtonsVisible = false
-
-                                // TODO persist score
+                            if (scoreCounterState.value != ScoreCounterState.IDLE) {
+                                onEvent(ScoreCounterEvent.OkButtonClicked)
                             }
                         },
-                        modifier = Modifier.alpha(if (areOkAndCancelButtonsVisible) 1f else 0f),
+                        modifier = Modifier
+                            .alpha(
+                                if (scoreCounterState.value != ScoreCounterState.IDLE) 1f else 0f),
                         containerColor = OkButtonContainerClr,
                         painterResourceId = R.drawable.check,
                         contentDescription = "OK"
@@ -152,8 +142,7 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                     Spacer(modifier = Modifier.weight(1f))
                     RcButtonWithText(
                         onClick = {
-                            ScoreManager.incrementLeftScore()
-                            areOkAndCancelButtonsVisible = true
+                            onEvent(ScoreCounterEvent.IncrementLeftScore)
                         },
                         containerColor = IncrementButtonContainerClr,
                         text = "+1",
@@ -161,8 +150,7 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                     Spacer(modifier = Modifier.size(20.dp))
                     RcButtonWithText(
                         onClick = {
-                            ScoreManager.incrementRightScore()
-                            areOkAndCancelButtonsVisible = true
+                            onEvent(ScoreCounterEvent.IncrementRightScore)
                         },
                         containerColor = IncrementButtonContainerClr,
                         text = "+1",
@@ -182,8 +170,7 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                     Spacer(modifier = Modifier.weight(1f))
                     RcButtonWithText(
                         onClick = {
-                            ScoreManager.decrementLeftScore()
-                            areOkAndCancelButtonsVisible = true
+                            onEvent(ScoreCounterEvent.DecrementLeftScore)
                         },
                         containerColor = DecrementButtonContainerClr,
                         text = "-1",
@@ -191,8 +178,7 @@ fun MainScreen(isScFacingDown: State<Boolean>, onEvent: (event: ScoreCounterEven
                     Spacer(modifier = Modifier.size(20.dp))
                     RcButtonWithText(
                         onClick = {
-                            ScoreManager.decrementRightScore()
-                            areOkAndCancelButtonsVisible = true
+                            onEvent(ScoreCounterEvent.DecrementRightScore)
                         },
                         containerColor = DecrementButtonContainerClr,
                         text = "-1",
