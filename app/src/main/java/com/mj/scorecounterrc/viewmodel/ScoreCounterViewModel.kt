@@ -1,7 +1,7 @@
 package com.mj.scorecounterrc.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.mj.scorecounterrc.Storage
+import com.mj.scorecounterrc.data.manager.StorageManager
 import com.mj.scorecounterrc.ble.ConnectionManager
 import com.mj.scorecounterrc.data.manager.ScoreManager
 import com.mj.scorecounterrc.data.model.Score
@@ -119,10 +119,10 @@ class ScoreCounterViewModel : ViewModel() {
 
     private fun persistScore(score1: Int, score2: Int, isFacingToTheReferee: Boolean,
                              timestamp: Long) {
-        Storage.saveScore1(score1)
-        Storage.saveScore2(score2)
-        Storage.saveSCOrientation(isFacingToTheReferee)
-        Storage.saveTimestamp(timestamp)
+        StorageManager.saveScore1(score1)
+        StorageManager.saveScore2(score2)
+        StorageManager.saveSCOrientation(isFacingToTheReferee)
+        StorageManager.saveTimestamp(timestamp)
     }
 }
 

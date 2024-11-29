@@ -9,6 +9,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.mj.scorecounterrc.data.manager.StorageManager
 import com.mj.scorecounterrc.scorecounter.ScoreCounterConnectionManager
 import com.mj.scorecounterrc.smartwatch.SmartwatchManager
 import fr.bipi.treessence.file.FileLoggerTree
@@ -33,7 +34,7 @@ class ScoreCounterRcApp : Application() {
 
         ScoreCounterConnectionManager.app = this
         SmartwatchManager.app = this
-        Storage.app = this
+        StorageManager.app = this
 
         ScoreCounterConnectionManager.btAdapter = getSystemService(BluetoothManager::class.java)
             ?.adapter

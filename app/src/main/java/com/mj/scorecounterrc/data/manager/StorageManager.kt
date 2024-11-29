@@ -1,8 +1,9 @@
-package com.mj.scorecounterrc
+package com.mj.scorecounterrc.data.manager
 
 import android.content.Context
+import com.mj.scorecounterrc.ScoreCounterRcApp
 
-object Storage {
+object StorageManager {
 
     const val PREFS_NAME = "Prefs"
     const val PREF_LAST_DEVICE_ADDRESS = "lastDeviceAddress"

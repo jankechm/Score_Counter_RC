@@ -79,11 +79,11 @@ object ScoreSync {
             if (watchDataReceived.get() && getSCDataAttempt.get() > GET_SC_DATA_MAX_ATTEMPTS) {
                 syncWatchAndPhone()
                 reset()
-                Timber.i("Partial sync: watch and phone.")
+                Timber.i("Partial sync done: watch and phone.")
             } else if (scDataReceived.get() && getWatchDataAttempt.get() > GET_WATCH_DATA_MAX_ATTEMPTS) {
                 syncSCAndPhone()
                 reset()
-                Timber.i("Partial sync: score counter and phone.")
+                Timber.i("Partial sync done: score counter and phone.")
             } else if (getSCDataAttempt.get() > GET_SC_DATA_MAX_ATTEMPTS
                 && getWatchDataAttempt.get() > GET_WATCH_DATA_MAX_ATTEMPTS
             ) {

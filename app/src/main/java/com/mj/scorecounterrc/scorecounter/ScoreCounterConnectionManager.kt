@@ -16,7 +16,7 @@ import androidx.core.app.ActivityCompat
 import com.mj.scorecounterrc.Constants
 import com.mj.scorecounterrc.ScoreCounterRcApp
 import com.mj.scorecounterrc.ScoreSync
-import com.mj.scorecounterrc.Storage
+import com.mj.scorecounterrc.data.manager.StorageManager
 import com.mj.scorecounterrc.ble.Connect
 import com.mj.scorecounterrc.ble.ConnectionManager
 import com.mj.scorecounterrc.ble.ConnectionManager.isConnected
@@ -78,7 +78,7 @@ object ScoreCounterConnectionManager {
                 }
 
                 if (app != null) {
-                    Storage.saveDeviceAddress(btDevice.address)
+                    StorageManager.saveDeviceAddress(btDevice.address)
 
                     handler.post {
                         Toast.makeText(
@@ -210,7 +210,7 @@ object ScoreCounterConnectionManager {
             return
         }
 
-        val savedDeviceAddress = Storage.getSavedDeviceAddress()
+        val savedDeviceAddress = StorageManager.getSavedDeviceAddress()
 
         if (btAdapter != null && savedDeviceAddress != null) {
             val savedDevice: BluetoothDevice? =
