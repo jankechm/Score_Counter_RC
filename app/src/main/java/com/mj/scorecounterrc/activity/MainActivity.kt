@@ -19,6 +19,8 @@ class MainActivity : ComponentActivity() {
                 MainScreenRoot(scoreCounterViewModel)
             }
         }
+
+        scoreCounterViewModel.loadPersistedScore()
     }
 }
 

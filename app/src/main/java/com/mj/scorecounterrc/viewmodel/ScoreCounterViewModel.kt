@@ -124,6 +124,18 @@ class ScoreCounterViewModel : ViewModel() {
         StorageManager.saveSCOrientation(isFacingToTheReferee)
         StorageManager.saveTimestamp(timestamp)
     }
+
+    fun loadPersistedScore() {
+        val score1 = StorageManager.getScore1()
+        val score2 = StorageManager.getScore2()
+        val isFacingToTheReferee = StorageManager.getSCOrientation()
+        val timestamp = StorageManager.getTimestamp()
+
+        ScoreManager.setScore(score1, score2)
+        ScoreManager.timestamp = timestamp
+        ScoreManager.confirmNewScore(false)
+        _isScFacingToTheReferee.update { isFacingToTheReferee }
+    }
 }
 
 sealed interface ScoreCounterEvent {
