@@ -2,11 +2,11 @@ package com.mj.scorecounterrc.scorecounter
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Application.RECEIVER_NOT_EXPORTED
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGattCharacteristic
-import android.content.IntentFilter
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
@@ -14,7 +14,6 @@ import android.os.Looper
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.mj.scorecounterrc.Constants
-import com.mj.scorecounterrc.ScoreCounterRcApp
 import com.mj.scorecounterrc.ScoreSync
 import com.mj.scorecounterrc.data.manager.StorageManager
 import com.mj.scorecounterrc.ble.Connect
@@ -23,8 +22,10 @@ import com.mj.scorecounterrc.ble.ConnectionManager.isConnected
 import com.mj.scorecounterrc.broadcastreceiver.BtStateChangedReceiver
 import com.mj.scorecounterrc.data.manager.AppCfgManager
 import com.mj.scorecounterrc.data.model.Score
+import com.mj.scorecounterrc.hasBtPermissions
 import com.mj.scorecounterrc.listener.BtBroadcastListener
 import com.mj.scorecounterrc.listener.ConnectionEventListener
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -35,7 +36,12 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 object ScoreCounterConnectionManager {
-    var btAdapter: BluetoothAdapter? = null
+
+    @ApplicationContext
+    private lateinit var context: Context
+
+    private val btAdapter: BluetoothAdapter? = context.getSystemService(BluetoothManager::class.java)
+        ?.adapter
 
     private var bleScoreCounter: BluetoothDevice? = null
     private var writableDisplayChar: BluetoothGattCharacteristic? = null
@@ -49,11 +55,6 @@ object ScoreCounterConnectionManager {
     private val handler: Handler = Handler(Looper.getMainLooper())
 
     private val applicationScope = CoroutineScope(SupervisorJob())
-
-    private val btStateChangedReceiver = BtStateChangedReceiver()
-
-    // Should be injected at app.onCreate()
-    var app: ScoreCounterRcApp? = null
 
 
     enum class ReconnectionType {
@@ -77,14 +78,12 @@ object ScoreCounterConnectionManager {
                     sendDayTimeToScoreCounter(btDevice, it)
                 }
 
-                if (app != null) {
-                    StorageManager.saveDeviceAddress(btDevice.address)
+                StorageManager.saveDeviceAddress(btDevice.address)
 
-                    handler.post {
-                        Toast.makeText(
-                            app!!,
-                            "Connected to ${btDevice.address}", Toast.LENGTH_SHORT).show()
-                    }
+                handler.post {
+                    Toast.makeText(
+                        context,
+                        "Connected to ${btDevice.address}", Toast.LENGTH_SHORT).show()
                 }
 
                 manuallyDisconnected = false
@@ -110,10 +109,10 @@ object ScoreCounterConnectionManager {
 //                    stopService(intent)
 //                }
 
-                app?.let {
+                context.let {
                     handler.post {
                         Toast.makeText(
-                            app!!,
+                            context,
                             "Disconnected from ${bleDevice.address}", Toast.LENGTH_SHORT)
                             .show()
                     }
@@ -176,7 +175,7 @@ object ScoreCounterConnectionManager {
                     !bleDevice.isConnected() &&
                     ConnectionManager.pendingOperation !is Connect
                 ) {
-                    app?.let { app ->
+                    context.let { app ->
                         ConnectionManager.connect(bleDevice, app)
                     }
                 }
@@ -185,27 +184,19 @@ object ScoreCounterConnectionManager {
     }
 
 
-    fun registerReceivers() {
-        val btStateChangedFilter = IntentFilter().apply {
-            addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
-            addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            app?.registerReceiver(btStateChangedReceiver, btStateChangedFilter, RECEIVER_NOT_EXPORTED)
-        } else {
-            app?.registerReceiver(btStateChangedReceiver, btStateChangedFilter)
-        }
+    init {
+        registerListeners()
     }
 
-    fun registerListeners() {
+
+    private fun registerListeners() {
         ConnectionManager.registerListener(connectionEventListener)
-        btStateChangedReceiver.registerListener(btBroadcastListener)
+        BtStateChangedReceiver.registerListener(btBroadcastListener)
     }
 
     @SuppressLint("MissingPermission")
     fun startConnectionToPersistedDeviceCoroutine() {
-        if (isSomeConnectionCoroutineRunning || app == null) {
+        if (isSomeConnectionCoroutineRunning) {
             Timber.i( "Some connection coroutine already running!")
             return
         }
@@ -215,14 +206,14 @@ object ScoreCounterConnectionManager {
         if (btAdapter != null && savedDeviceAddress != null) {
             val savedDevice: BluetoothDevice? =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    btAdapter!!.getRemoteLeDevice(savedDeviceAddress, BluetoothDevice.ADDRESS_TYPE_PUBLIC)
+                    btAdapter.getRemoteLeDevice(savedDeviceAddress, BluetoothDevice.ADDRESS_TYPE_PUBLIC)
                 } else {
-                    btAdapter!!.getRemoteDevice(savedDeviceAddress)
+                    btAdapter.getRemoteDevice(savedDeviceAddress)
                 }
 
             if (savedDevice != null) {
                 if (ActivityCompat.checkSelfPermission(
-                        app!!, Manifest.permission.BLUETOOTH_CONNECT
+                        context, Manifest.permission.BLUETOOTH_CONNECT
                     ) == PackageManager.PERMISSION_GRANTED &&
                     savedDevice.bondState == BluetoothDevice.BOND_BONDED) {
                     applicationScope.launch(Dispatchers.IO) {
@@ -237,7 +228,7 @@ object ScoreCounterConnectionManager {
         isSomeConnectionCoroutineRunning = false
     }
 
-    fun startReconnectionCoroutine() {
+    private fun startReconnectionCoroutine() {
         if (bleScoreCounter == null) {
             Timber.i( "BluetoothDevice is null!")
             return
@@ -249,7 +240,7 @@ object ScoreCounterConnectionManager {
     }
 
     private suspend fun tryConnect(bleDevice: BluetoothDevice, reconnectionType: ReconnectionType) {
-        if (isSomeConnectionCoroutineRunning || app == null) {
+        if (isSomeConnectionCoroutineRunning) {
             Timber.i( "Some connection coroutine already running!")
             return
         }
@@ -268,11 +259,11 @@ object ScoreCounterConnectionManager {
         shouldTryConnect = true
 
         delay(initialDelayMillis)
-        while (btAdapter != null && btAdapter!!.isEnabled && app!!.hasBtPermissions() &&
+        while (btAdapter != null && btAdapter!!.isEnabled && context.hasBtPermissions() &&
             shouldTryConnect
         ) {
             if (ConnectionManager.pendingOperation !is Connect) {
-                ConnectionManager.connect(bleDevice, app!!.applicationContext)
+                ConnectionManager.connect(bleDevice, context.applicationContext)
             }
             connectionAttempts++
             delay(connectionDelayMillis)

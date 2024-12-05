@@ -1,20 +1,21 @@
 package com.mj.scorecounterrc.smartwatch
 
 import android.app.Application.RECEIVER_EXPORTED
+import android.content.Context
 import android.content.IntentFilter
 import android.os.Build
 import com.getpebble.android.kit.PebbleKit
-import com.mj.scorecounterrc.ScoreCounterRcApp
 import com.mj.scorecounterrc.ScoreSync
 import com.mj.scorecounterrc.broadcastreceiver.SCPebbleDataReceiver
 import com.mj.scorecounterrc.scorecounter.ScoreCounterConnectionManager
 import com.mj.scorecounterrc.data.manager.ScoreManager
 import com.mj.scorecounterrc.data.model.Score
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 object SmartwatchManager {
 
-    // Should be injected at app.onCreate()
-    var app: ScoreCounterRcApp? = null
+    @ApplicationContext
+    private lateinit var context: Context
 
     private val scPebbleDataReceiver = SCPebbleDataReceiver(PebbleManager.pebbleAppUUID)
 
@@ -23,8 +24,15 @@ object SmartwatchManager {
         SYNC
     }
 
-    fun registerReceivers() {
-        app?.let { app ->
+
+    init {
+        registerListeners()
+        registerReceivers()
+        startSmartwatchApp()
+    }
+
+    private fun registerReceivers() {
+        context.let { app ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 app.registerReceiver(
                     scPebbleDataReceiver,
@@ -37,24 +45,24 @@ object SmartwatchManager {
         }
     }
 
-    fun registerListeners() {
+    private fun registerListeners() {
         scPebbleDataReceiver.registerListener(PebbleManager.pebbleListener)
     }
 
     fun sendScoreToSmartwatch(score: Score, timestamp: Long) {
-        app?.let { app ->
+        context.let { app ->
             PebbleManager.sendScoreToPebble(score, timestamp, app)
         }
     }
 
     fun sendSyncRequestToSmartwatch() {
-        app?.let { app ->
+        context.let { app ->
             PebbleManager.sendSyncRequestToPebble(app)
         }
     }
 
     fun startSmartwatchApp() {
-        app?.let { app ->
+        context.let { app ->
             PebbleManager.startPebbleApp(app)
         }
     }

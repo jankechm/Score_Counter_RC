@@ -12,8 +12,12 @@ import timber.log.Timber
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentHashMap
 
-
-class BtStateChangedReceiver : BroadcastReceiver() {
+/**
+ * This object should be registered in the Application class.
+ * Therefore, there should be one registered instance per application, but there could be
+ * multiple listeners registered for this instance.
+ */
+object BtStateChangedReceiver : BroadcastReceiver() {
 
     private var listeners: MutableSet<WeakReference<BtBroadcastListener>> = ConcurrentHashMap.newKeySet()
 
@@ -56,6 +60,7 @@ class BtStateChangedReceiver : BroadcastReceiver() {
         }
     }
 
+    @Synchronized
     fun registerListener(listener: BtBroadcastListener) {
         if (listeners.map { it.get() }.none { it?.equals(listener) == true }) {
             listeners.add(WeakReference(listener))
@@ -66,6 +71,7 @@ class BtStateChangedReceiver : BroadcastReceiver() {
         }
     }
 
+    @Synchronized
     fun unregisterListener(listener: BtBroadcastListener) {
         listeners.removeIf { it.get() == listener || it.get() == null }
         Timber.d("Removed a BtBroadcastListener, ${listeners.size} listeners total")

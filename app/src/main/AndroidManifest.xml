@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:name=".ScoreCounterRcApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -22,7 +23,7 @@
 
         <service
             android:name=".service.RcService"
-            android:description="This service handles communication between smartwatch and Score Counter"
+            android:description="@string/rc_service_desc"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="connectedDevice"

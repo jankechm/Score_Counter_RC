@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mj.scorecounterrc.R
 import com.mj.scorecounterrc.ui.theme.CancelButtonContainerClr
@@ -45,7 +46,8 @@ fun MainScreenPreview() {
 }
 
 @Composable
-fun MainScreenRoot(scoreCounterViewModel: ScoreCounterViewModel) {
+fun MainScreenRoot() {
+    val scoreCounterViewModel = hiltViewModel<ScoreCounterViewModel>()
     val isScFacingDown = scoreCounterViewModel.isScFacingToTheReferee.collectAsState()
     val scoreCounterState = scoreCounterViewModel.scoreCounterState.collectAsStateWithLifecycle()
     val onEvent = scoreCounterViewModel::onEvent
@@ -60,7 +62,7 @@ fun MainScreen(isScFacingDown: State<Boolean>, scoreCounterState: State<ScoreCou
 
     Scaffold(
         topBar = {
-            ScRcTopAppBar()
+            ScRcTopAppBarRoot()
         },
         content = { innerPadding ->
             Column(

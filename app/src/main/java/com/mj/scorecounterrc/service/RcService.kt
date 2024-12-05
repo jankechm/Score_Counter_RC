@@ -47,7 +47,7 @@ class RcService : Service() {
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("Score Counter")
-            .setContentText("Staying alive! ♪")
+            .setContentText("Play the game! ✌")
             .setContentIntent(pendingIntent)
             .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
             .build()

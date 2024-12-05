@@ -8,13 +8,16 @@ import com.mj.scorecounterrc.data.model.Score
 import com.mj.scorecounterrc.listener.ConnectionEventListener
 import com.mj.scorecounterrc.scorecounter.ScoreCounterConnectionManager
 import com.mj.scorecounterrc.smartwatch.SmartwatchManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import timber.log.Timber
+import javax.inject.Inject
 
-class ScoreCounterViewModel : ViewModel() {
+@HiltViewModel
+class ScoreCounterViewModel @Inject constructor(): ViewModel() {
     private val _isScFacingToTheReferee = MutableStateFlow(false)
     val isScFacingToTheReferee: StateFlow<Boolean> = _isScFacingToTheReferee.asStateFlow()
 
@@ -42,6 +45,7 @@ class ScoreCounterViewModel : ViewModel() {
 
     init {
         ConnectionManager.registerListener(connectionEventListener)
+        loadPersistedScore()
     }
 
     fun onEvent(event: ScoreCounterEvent) {

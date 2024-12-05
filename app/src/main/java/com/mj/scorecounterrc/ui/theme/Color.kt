@@ -22,3 +22,9 @@ val OkButtonContainerClr = Color(0xFF669900)
 
 val SwapButtonContainerClr = Color(0xFFFF8800)
 val RotateButtonContainerClr = Color(0xFF7D5260)
+
+val ScanButtonContainerClr = Color(0xFF0099CC)
+val DisconnectButtonContainerClr = Color(0xFFCC0000)
+val ConnectButtonContainerClr = Color(0xFF669900)
+
+val ScScanResultContainerClr = Color(0xFFD1E5F4)
