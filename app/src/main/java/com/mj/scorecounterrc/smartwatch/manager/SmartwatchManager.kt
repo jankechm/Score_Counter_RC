@@ -5,25 +5,23 @@ import android.content.Context
 import android.content.IntentFilter
 import android.os.Build
 import com.getpebble.android.kit.PebbleKit
-import com.mj.scorecounterrc.ScoreSync
 import com.mj.scorecounterrc.broadcastreceiver.SCPebbleDataReceiver
-import com.mj.scorecounterrc.scorecounter.ScoreCounterConnectionManager
-import com.mj.scorecounterrc.data.manager.ScoreManager
 import com.mj.scorecounterrc.data.model.Score
-import com.mj.scorecounterrc.smartwatch.MsgTypeFromSmartwatch
+import com.mj.scorecounterrc.smartwatch.DataReceiver
 import com.mj.scorecounterrc.smartwatch.listener.PebbleListener
 import com.mj.scorecounterrc.smartwatch.listener.SmartwatchListener
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object SmartwatchManager {
-
-    @ApplicationContext
-    private lateinit var context: Context
-
-    private val scPebbleDataReceiver = SCPebbleDataReceiver(PebbleManager.pebbleAppUUID)
+@Singleton
+class SmartwatchManager @Inject constructor(
+    @ApplicationContext private var context: Context,
+    private val pebbleManager: PebbleManager,
+    private val dataReceiver: DataReceiver
+) {
     // TODO inject
-    private val pebbleManager: PebbleManager = PebbleManager()
-
+    private val scPebbleDataReceiver = SCPebbleDataReceiver(PebbleManager.pebbleAppUUID)
 
     init {
         registerListeners()
@@ -52,7 +50,7 @@ object SmartwatchManager {
     private fun registerPebbleListeners() {
         pebbleManager.registerListener(SmartwatchListener().apply {
             onReceivedDataValidated = { score, timestamp, msgType ->
-                handleReceivedData(score, timestamp, msgType)
+                dataReceiver.onDataReceived(score, timestamp, msgType)
             }
         })
 
@@ -78,17 +76,6 @@ object SmartwatchManager {
     private fun startSmartwatchApp() {
         context.let { app ->
             pebbleManager.startPebbleApp(app)
-        }
-    }
-
-    private fun handleReceivedData(score: Score, timestamp: Long, msgType: MsgTypeFromSmartwatch) {
-        if (msgType == MsgTypeFromSmartwatch.SET_SCORE) {
-            // Accept new score set by smartwatch
-            ScoreCounterConnectionManager.sendScoreToScoreCounter(score, timestamp)
-            ScoreManager.saveReceivedScore(score, timestamp)
-        } else {
-            // Continue with sync process
-            ScoreSync.setSmartwatchData(score, timestamp)
         }
     }
 }

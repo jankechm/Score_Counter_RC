@@ -5,12 +5,15 @@ import android.os.Looper
 import com.mj.scorecounterrc.scorecounter.ScoreCounterConnectionManager
 import com.mj.scorecounterrc.data.manager.ScoreManager
 import com.mj.scorecounterrc.data.model.Score
+import com.mj.scorecounterrc.smartwatch.DataReceiver
+import com.mj.scorecounterrc.smartwatch.MsgTypeFromSmartwatch
 import com.mj.scorecounterrc.smartwatch.manager.SmartwatchManager
 import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import javax.inject.Inject
 
-object ScoreSync {
+object ScoreSync : DataReceiver {
     private val waitingForWatchData: AtomicBoolean = AtomicBoolean(false)
     private val waitingForSCData: AtomicBoolean = AtomicBoolean(false)
 
@@ -33,6 +36,9 @@ object ScoreSync {
 
     private val handler = Handler(Looper.getMainLooper())
 
+    @Inject
+    private lateinit var smartwatchManager: SmartwatchManager
+
     /**
      * Send sync request to smartwatch and wait for it until [GET_WATCH_DATA_TIMEOUT] expires
      * up to [GET_WATCH_DATA_MAX_ATTEMPTS] times.
@@ -40,7 +46,7 @@ object ScoreSync {
     private val getWatchDataTimerRunnable = object : Runnable {
         override fun run() {
             if (getWatchDataAttempt.getAndIncrement() < GET_WATCH_DATA_MAX_ATTEMPTS) {
-                SmartwatchManager.sendSyncRequestToSmartwatch()
+                smartwatchManager.sendSyncRequestToSmartwatch()
                 handler.postDelayed(this, GET_WATCH_DATA_TIMEOUT)
             }
         }
@@ -106,20 +112,20 @@ object ScoreSync {
         } else if (ScoreManager.timestamp >= watchTimestamp
             && ScoreManager.timestamp >= scoreCounterTimestamp) {
             // Smartphone has the latest score, propagate it to those, who's timestamp is not equal.
-            SmartwatchManager.sendScoreToSmartwatch(ScoreManager.localScore.value, ScoreManager.timestamp)
+            smartwatchManager.sendScoreToSmartwatch(ScoreManager.localScore.value, ScoreManager.timestamp)
             if (ScoreManager.timestamp > scoreCounterTimestamp) {
                 ScoreCounterConnectionManager.sendScoreToScoreCounter(ScoreManager.localScore.value, ScoreManager.timestamp)
             }
         } else {
             // Score Counter has the latest score, propagate it.
             ScoreManager.saveReceivedScore(scoreCounterScore, scoreCounterTimestamp)
-            SmartwatchManager.sendScoreToSmartwatch(scoreCounterScore, scoreCounterTimestamp)
+            smartwatchManager.sendScoreToSmartwatch(scoreCounterScore, scoreCounterTimestamp)
         }
     }
 
     private fun syncWatchAndPhone() {
         if (ScoreManager.timestamp > watchTimestamp) {
-            SmartwatchManager.sendScoreToSmartwatch(ScoreManager.localScore.value, ScoreManager.timestamp)
+            smartwatchManager.sendScoreToSmartwatch(ScoreManager.localScore.value, ScoreManager.timestamp)
         } else if (ScoreManager.timestamp < watchTimestamp) {
             ScoreManager.saveReceivedScore(watchScore, watchTimestamp)
         }
@@ -177,5 +183,16 @@ object ScoreSync {
 
         getWatchDataAttempt.set(0)
         getSCDataAttempt.set(0)
+    }
+
+    override fun onDataReceived(score: Score, timestamp: Long, msgType: MsgTypeFromSmartwatch) {
+        if (msgType == MsgTypeFromSmartwatch.SET_SCORE) {
+            // Accept new score set by smartwatch
+            ScoreCounterConnectionManager.sendScoreToScoreCounter(score, timestamp)
+            ScoreManager.saveReceivedScore(score, timestamp)
+        } else {
+            // Continue with sync process
+            setSmartwatchData(score, timestamp)
+        }
     }
 }

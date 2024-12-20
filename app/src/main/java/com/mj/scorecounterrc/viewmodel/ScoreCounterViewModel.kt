@@ -17,7 +17,10 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class ScoreCounterViewModel @Inject constructor(): ViewModel() {
+class ScoreCounterViewModel @Inject constructor(
+    private val smartwatchManager: SmartwatchManager
+): ViewModel() {
+
     private val _isScFacingToTheReferee = MutableStateFlow(false)
     val isScFacingToTheReferee: StateFlow<Boolean> = _isScFacingToTheReferee.asStateFlow()
 
@@ -102,7 +105,7 @@ class ScoreCounterViewModel @Inject constructor(): ViewModel() {
 
                 val isSentToSc = ScoreCounterConnectionManager.sendScoreToScoreCounter(
                     Score(score1, score2), ScoreManager.timestamp)
-                SmartwatchManager.sendScoreToSmartwatch(
+                smartwatchManager.sendScoreToSmartwatch(
                     Score(score1, score2), ScoreManager.timestamp)
 
                 if (isSentToSc) {

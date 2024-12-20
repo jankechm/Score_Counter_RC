@@ -1,6 +1,5 @@
 package com.mj.scorecounterrc.smartwatch.listener
 
-import com.getpebble.android.kit.util.PebbleDictionary
 import com.mj.scorecounterrc.data.model.Score
 import com.mj.scorecounterrc.smartwatch.MsgTypeFromSmartwatch
 
