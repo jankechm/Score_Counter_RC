@@ -85,11 +85,14 @@ class BLEScanner @Inject constructor(@ApplicationContext private val context: Co
      * before calling this method.
      */
     @SuppressLint("MissingPermission", "NotifyDataSetChanged")
-    fun startBleScan() {
+    fun startBleScan(): Boolean {
         if (bluetoothAdapter != null) {
             if (bluetoothAdapter.isEnabled) {
                 _bluetoothState.value = BluetoothState.On
-                bluetoothAdapter.bluetoothLeScanner.startScan(listOf(scanFilter), scanSettings, scanCallback)
+                bluetoothAdapter.bluetoothLeScanner.startScan(
+                    listOf(scanFilter), scanSettings, scanCallback
+                )
+                return true
             } else {
                 Timber.i("startBleScan(): Bluetooth is not enabled!")
                 context.let {
@@ -102,6 +105,8 @@ class BLEScanner @Inject constructor(@ApplicationContext private val context: Co
         else {
             Timber.w("startBleScan(): BluetoothAdapter is null!")
         }
+
+        return false
     }
 
     /**

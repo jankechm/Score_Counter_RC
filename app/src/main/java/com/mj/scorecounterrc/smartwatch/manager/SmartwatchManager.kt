@@ -18,10 +18,9 @@ import javax.inject.Singleton
 class SmartwatchManager @Inject constructor(
     @ApplicationContext private var context: Context,
     private val pebbleManager: PebbleManager,
-    private val dataReceiver: DataReceiver
+    private val dataReceiver: DataReceiver,
+    private val scPebbleDataReceiver: SCPebbleDataReceiver
 ) {
-    // TODO inject
-    private val scPebbleDataReceiver = SCPebbleDataReceiver(PebbleManager.pebbleAppUUID)
 
     init {
         registerListeners()

@@ -15,16 +15,16 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.mj.scorecounterrc.Constants
 import com.mj.scorecounterrc.ScoreSync
-import com.mj.scorecounterrc.data.manager.StorageManager
 import com.mj.scorecounterrc.ble.Connect
 import com.mj.scorecounterrc.ble.ConnectionManager
 import com.mj.scorecounterrc.ble.ConnectionManager.isConnected
 import com.mj.scorecounterrc.broadcastreceiver.BtStateChangedReceiver
 import com.mj.scorecounterrc.data.manager.AppCfgManager
+import com.mj.scorecounterrc.data.manager.StorageManager
 import com.mj.scorecounterrc.data.model.Score
-import com.mj.scorecounterrc.util.hasBtPermissions
 import com.mj.scorecounterrc.listener.BtBroadcastListener
 import com.mj.scorecounterrc.listener.ConnectionEventListener
+import com.mj.scorecounterrc.util.hasBtPermissions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,8 +41,9 @@ import javax.inject.Singleton
 @Singleton
 class ScoreCounterConnectionManager @Inject constructor(
     @ApplicationContext private var context: Context,
-    private val scoreSync: ScoreSync
-) {
+    private val scoreSync: ScoreSync,
+    private val storageManager: StorageManager
+) : ScoreCounterMessageSender {
 
     private val btAdapter: BluetoothAdapter? = context.getSystemService(BluetoothManager::class.java)
         ?.adapter
@@ -82,7 +83,7 @@ class ScoreCounterConnectionManager @Inject constructor(
                     sendDayTimeToScoreCounter(btDevice, it)
                 }
 
-                StorageManager.saveDeviceAddress(btDevice.address)
+                storageManager.saveDeviceAddress(btDevice.address)
 
                 handler.post {
                     Toast.makeText(
@@ -200,7 +201,7 @@ class ScoreCounterConnectionManager @Inject constructor(
 
     @SuppressLint("MissingPermission")
     fun startConnectionToPersistedDeviceCoroutine() {
-        val savedDeviceAddress = StorageManager.getSavedDeviceAddress()
+        val savedDeviceAddress = storageManager.getSavedDeviceAddress()
 
         if (btAdapter != null && savedDeviceAddress != null) {
             val savedDevice: BluetoothDevice? =
@@ -256,7 +257,7 @@ class ScoreCounterConnectionManager @Inject constructor(
         shouldTryConnect = true
 
         delay(initialDelayMillis)
-        while (btAdapter != null && btAdapter!!.isEnabled && context.hasBtPermissions() &&
+        while (btAdapter != null && btAdapter.isEnabled && context.hasBtPermissions() &&
             shouldTryConnect
         ) {
             if (ConnectionManager.pendingOperation !is Connect) {
@@ -349,5 +350,13 @@ class ScoreCounterConnectionManager @Inject constructor(
 
     fun isBleScoreCounterConnected(): Boolean {
         return bleScoreCounter != null && bleScoreCounter!!.isConnected()
+    }
+
+    override fun sendScore(score: Score, timestamp: Long) {
+        sendScoreToScoreCounter(score, timestamp)
+    }
+
+    override fun requestScoreSync() {
+        sendSyncRequestToScoreCounter()
     }
 }

@@ -2,19 +2,22 @@ package com.mj.scorecounterrc.data.manager
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object StorageManager {
+@Singleton
+class StorageManager @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
 
-    const val PREFS_NAME = "Prefs"
-    const val PREF_LAST_DEVICE_ADDRESS = "lastDeviceAddress"
-    const val PREF_SCORE_1 = "score1"
-    const val PREF_SCORE_2 = "score2"
-    const val PREF_TIMESTAMP = "timestamp"
-    const val PREF_SC_FACES_TO_REFEREE = "sc_faces_to_referee"
-
-    @ApplicationContext
-    private lateinit var context: Context
-
+    companion object {
+        const val PREFS_NAME = "Prefs"
+        const val PREF_LAST_DEVICE_ADDRESS = "lastDeviceAddress"
+        const val PREF_SCORE_1 = "score1"
+        const val PREF_SCORE_2 = "score2"
+        const val PREF_TIMESTAMP = "timestamp"
+        const val PREF_SC_FACES_TO_REFEREE = "sc_faces_to_referee"
+    }
 
     fun saveDeviceAddress(deviceAddress: String) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

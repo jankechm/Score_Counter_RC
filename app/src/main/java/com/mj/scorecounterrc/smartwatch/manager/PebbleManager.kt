@@ -11,8 +11,9 @@ import timber.log.Timber
 import java.lang.ref.WeakReference
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import javax.inject.Inject
 
-class PebbleManager {
+class PebbleManager @Inject constructor() {
 
     companion object {
         val pebbleAppUUID: UUID = UUID.fromString(Constants.PEBBLE_APP_UUID)

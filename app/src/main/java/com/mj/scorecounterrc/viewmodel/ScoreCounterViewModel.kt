@@ -19,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ScoreCounterViewModel @Inject constructor(
     private val smartwatchManager: SmartwatchManager,
-    private val scoreCounterConnectionManager: ScoreCounterConnectionManager
+    private val scoreCounterConnectionManager: ScoreCounterConnectionManager,
+    private val storageManager: StorageManager
 ): ViewModel() {
 
     private val _isScFacingToTheReferee = MutableStateFlow(false)
@@ -127,17 +128,17 @@ class ScoreCounterViewModel @Inject constructor(
 
     private fun persistScore(score1: Int, score2: Int, isFacingToTheReferee: Boolean,
                              timestamp: Long) {
-        StorageManager.saveScore1(score1)
-        StorageManager.saveScore2(score2)
-        StorageManager.saveSCOrientation(isFacingToTheReferee)
-        StorageManager.saveTimestamp(timestamp)
+        storageManager.saveScore1(score1)
+        storageManager.saveScore2(score2)
+        storageManager.saveSCOrientation(isFacingToTheReferee)
+        storageManager.saveTimestamp(timestamp)
     }
 
     fun loadPersistedScore() {
-        val score1 = StorageManager.getScore1()
-        val score2 = StorageManager.getScore2()
-        val isFacingToTheReferee = StorageManager.getSCOrientation()
-        val timestamp = StorageManager.getTimestamp()
+        val score1 = storageManager.getScore1()
+        val score2 = storageManager.getScore2()
+        val isFacingToTheReferee = storageManager.getSCOrientation()
+        val timestamp = storageManager.getTimestamp()
 
         ScoreManager.setScore(score1, score2)
         ScoreManager.timestamp = timestamp

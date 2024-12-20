@@ -2,8 +2,11 @@ package com.mj.scorecounterrc.viewmodel
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mj.scorecounterrc.Constants
 import com.mj.scorecounterrc.scorecounter.BLEScanner
 import com.mj.scorecounterrc.scorecounter.BLEScanner.BluetoothState
 import com.mj.scorecounterrc.ble.ConnectionManager
@@ -36,6 +39,8 @@ class ConnectionViewModel @Inject constructor(
 
     private val _bluetoothEnableRequest = MutableStateFlow(false)
     val bluetoothEnableRequest: StateFlow<Boolean> = _bluetoothEnableRequest.asStateFlow()
+
+    private val handler: Handler = Handler(Looper.getMainLooper())
 
     @SuppressLint("MissingPermission")
     val bleDeviceCards: StateFlow<List<DeviceCard>> = bleScanner.bleScanResults
@@ -83,12 +88,23 @@ class ConnectionViewModel @Inject constructor(
     }
 
 
-    fun startScan() {
+    private fun startScan() {
         if (!isScanning.value) {
-            bleScanner.startBleScan()
-            _isScanning.update { true }
-
+            handler.postDelayed({
+                _isScanning.update { false }
+                bleScanner.stopBleScan()
+            }, Constants.SCAN_PERIOD)
         }
+
+        val success = bleScanner.startBleScan()
+        if (success) {
+            _isScanning.update { true }
+        }
+    }
+
+    private fun stopScan() {
+        bleScanner.stopBleScan()
+        _isScanning.update { false }
     }
 
     fun onEvent(event: ConnectionViewModelEvent) {
@@ -102,8 +118,8 @@ class ConnectionViewModel @Inject constructor(
 
             is ConnectionViewModelEvent.Connect -> TODO()
             ConnectionViewModelEvent.Disconnect -> TODO()
-            ConnectionViewModelEvent.StartScan -> TODO()
-            ConnectionViewModelEvent.StopScan -> TODO()
+            ConnectionViewModelEvent.StartScan -> startScan()
+            ConnectionViewModelEvent.StopScan -> stopScan()
             ConnectionViewModelEvent.ResetBluetoothEnableRequest -> {
                 _bluetoothEnableRequest.value = false
             }

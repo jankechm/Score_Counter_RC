@@ -3,13 +3,16 @@ package com.mj.scorecounterrc.composable
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -118,9 +121,12 @@ fun ScRcTopAppBar(
     )
 
     if (showConnectionDialog) {
-        LaunchedEffect(bluetoothEnableRequest.value) {
-            if (bluetoothEnableRequest.value) {
+        if (bluetoothEnableRequest.value) {
+            LaunchedEffect(true) {
                 onEnableRequestEvent(EnableRequestedEvent.EnableBluetooth)
+                // recompose
+                showConnectionDialog = false
+                showConnectionDialog = true
             }
         }
 
@@ -170,7 +176,9 @@ fun ConnectionDialog(
 
     BasicAlertDialog(
         onDismissRequest = onDismiss,
-
+        modifier = Modifier
+            .background(Color.White, shape = RoundedCornerShape(16.dp))
+            .width(320.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Button(
@@ -226,13 +234,15 @@ fun ConnectionDialog(
 
             Box(
                 modifier = Modifier
-                    .size(300.dp, 230.dp)
+                    .size(290.dp, 260.dp)
                     .border(border = BorderStroke(2.dp, Color.Black)),
                 contentAlignment = Alignment.TopCenter,
             ) {
                 LazyColumn(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.verticalScroll(rememberScrollState())
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .height(200.dp)
                 ) {
 //                    items(
 //                        count = bleScanResults.value.size,
@@ -288,6 +298,8 @@ fun ConnectionDialog(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.size(20.dp))
         }
     }
 }
