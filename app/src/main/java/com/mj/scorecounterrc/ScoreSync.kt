@@ -12,8 +12,14 @@ import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
+import javax.inject.Singleton
 
-object ScoreSync : DataReceiver {
+@Singleton
+class ScoreSync @Inject constructor(
+    private val smartwatchManager: SmartwatchManager,
+    private val scoreCounterConnectionManager: ScoreCounterConnectionManager
+) : DataReceiver {
+
     private val waitingForWatchData: AtomicBoolean = AtomicBoolean(false)
     private val waitingForSCData: AtomicBoolean = AtomicBoolean(false)
 
@@ -29,15 +35,14 @@ object ScoreSync : DataReceiver {
     private var watchTimestamp: Long = 0
     private var scoreCounterTimestamp: Long = 0
 
-    const val GET_WATCH_DATA_MAX_ATTEMPTS = 2
-    const val GET_SC_DATA_MAX_ATTEMPTS = 2
-    const val GET_WATCH_DATA_TIMEOUT = 1000L
-    const val GET_SC_DATA_TIMEOUT = 1000L
+    companion object {
+        const val GET_WATCH_DATA_MAX_ATTEMPTS = 2
+        const val GET_SC_DATA_MAX_ATTEMPTS = 2
+        const val GET_WATCH_DATA_TIMEOUT = 1000L
+        const val GET_SC_DATA_TIMEOUT = 1000L
+    }
 
     private val handler = Handler(Looper.getMainLooper())
-
-    @Inject
-    private lateinit var smartwatchManager: SmartwatchManager
 
     /**
      * Send sync request to smartwatch and wait for it until [GET_WATCH_DATA_TIMEOUT] expires
@@ -59,7 +64,7 @@ object ScoreSync : DataReceiver {
     private val getSCDataTimerRunnable = object : Runnable {
         override fun run() {
             if (getSCDataAttempt.getAndIncrement() < GET_SC_DATA_MAX_ATTEMPTS) {
-                ScoreCounterConnectionManager.sendSyncRequestToScoreCounter()
+                scoreCounterConnectionManager.sendSyncRequestToScoreCounter()
                 handler.postDelayed(this, GET_SC_DATA_TIMEOUT)
             }
         }
@@ -108,13 +113,13 @@ object ScoreSync : DataReceiver {
         if (watchTimestamp >= ScoreManager.timestamp && watchTimestamp >= scoreCounterTimestamp) {
             // Smartwatch has the latest score, propagate it.
             ScoreManager.saveReceivedScore(watchScore, watchTimestamp)
-            ScoreCounterConnectionManager.sendScoreToScoreCounter(watchScore, watchTimestamp)
+            scoreCounterConnectionManager.sendScoreToScoreCounter(watchScore, watchTimestamp)
         } else if (ScoreManager.timestamp >= watchTimestamp
             && ScoreManager.timestamp >= scoreCounterTimestamp) {
             // Smartphone has the latest score, propagate it to those, who's timestamp is not equal.
             smartwatchManager.sendScoreToSmartwatch(ScoreManager.localScore.value, ScoreManager.timestamp)
             if (ScoreManager.timestamp > scoreCounterTimestamp) {
-                ScoreCounterConnectionManager.sendScoreToScoreCounter(ScoreManager.localScore.value, ScoreManager.timestamp)
+                scoreCounterConnectionManager.sendScoreToScoreCounter(ScoreManager.localScore.value, ScoreManager.timestamp)
             }
         } else {
             // Score Counter has the latest score, propagate it.
@@ -133,7 +138,7 @@ object ScoreSync : DataReceiver {
 
     private fun syncSCAndPhone() {
         if (ScoreManager.timestamp > scoreCounterTimestamp) {
-            ScoreCounterConnectionManager.sendScoreToScoreCounter(ScoreManager.localScore.value, ScoreManager.timestamp)
+            scoreCounterConnectionManager.sendScoreToScoreCounter(ScoreManager.localScore.value, ScoreManager.timestamp)
         } else if (ScoreManager.timestamp < scoreCounterTimestamp) {
             ScoreManager.saveReceivedScore(scoreCounterScore, scoreCounterTimestamp)
         }
@@ -188,7 +193,7 @@ object ScoreSync : DataReceiver {
     override fun onDataReceived(score: Score, timestamp: Long, msgType: MsgTypeFromSmartwatch) {
         if (msgType == MsgTypeFromSmartwatch.SET_SCORE) {
             // Accept new score set by smartwatch
-            ScoreCounterConnectionManager.sendScoreToScoreCounter(score, timestamp)
+            scoreCounterConnectionManager.sendScoreToScoreCounter(score, timestamp)
             ScoreManager.saveReceivedScore(score, timestamp)
         } else {
             // Continue with sync process

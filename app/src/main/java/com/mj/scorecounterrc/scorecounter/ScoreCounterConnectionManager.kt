@@ -35,11 +35,14 @@ import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object ScoreCounterConnectionManager {
-
-    @ApplicationContext
-    private lateinit var context: Context
+@Singleton
+class ScoreCounterConnectionManager @Inject constructor(
+    @ApplicationContext private var context: Context,
+    private val scoreSync: ScoreSync
+) {
 
     private val btAdapter: BluetoothAdapter? = context.getSystemService(BluetoothManager::class.java)
         ?.adapter
@@ -91,7 +94,7 @@ object ScoreCounterConnectionManager {
                 shouldTryConnect = false
 
                 // Trigger new sync
-                ScoreSync.trySync()
+                scoreSync.trySync()
 
                 // TODO
 //                val intent = Intent(this@BleScoreCounterApp, BleService::class.java)
@@ -142,7 +145,7 @@ object ScoreCounterConnectionManager {
                                     val score2 = scoreLst[1].toInt()
                                     val timestamp = scoreAndTimestampLst[1].toLong()
 
-                                    ScoreSync.setScoreCounterData(Score(score1, score2), timestamp)
+                                    scoreSync.setScoreCounterData(Score(score1, score2), timestamp)
                                 } catch (ex: NumberFormatException) {
                                     Timber.e("Problem parsing " +
                                             Constants.SCORE_CMD_PREFIX + " command.", ex)

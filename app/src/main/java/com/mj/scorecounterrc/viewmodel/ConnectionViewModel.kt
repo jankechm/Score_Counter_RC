@@ -22,9 +22,13 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ConnectionViewModel @Inject constructor(private val bleScanner: BLEScanner) : ViewModel() {
+class ConnectionViewModel @Inject constructor(
+    private val bleScanner: BLEScanner,
+    scoreCounterConnectionManager: ScoreCounterConnectionManager
+) : ViewModel() {
+
     private val _isConnected = MutableStateFlow(
-        ScoreCounterConnectionManager.isBleScoreCounterConnected())
+        scoreCounterConnectionManager.isBleScoreCounterConnected())
     val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
 
     private val _isScanning = MutableStateFlow(false)

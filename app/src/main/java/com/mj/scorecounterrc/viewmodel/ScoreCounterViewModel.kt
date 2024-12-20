@@ -18,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ScoreCounterViewModel @Inject constructor(
-    private val smartwatchManager: SmartwatchManager
+    private val smartwatchManager: SmartwatchManager,
+    private val scoreCounterConnectionManager: ScoreCounterConnectionManager
 ): ViewModel() {
 
     private val _isScFacingToTheReferee = MutableStateFlow(false)
@@ -103,7 +104,7 @@ class ScoreCounterViewModel @Inject constructor(
 
                 Timber.d("Local score timestamp: ${ScoreManager.timestamp}")
 
-                val isSentToSc = ScoreCounterConnectionManager.sendScoreToScoreCounter(
+                val isSentToSc = scoreCounterConnectionManager.sendScoreToScoreCounter(
                     Score(score1, score2), ScoreManager.timestamp)
                 smartwatchManager.sendScoreToSmartwatch(
                     Score(score1, score2), ScoreManager.timestamp)
