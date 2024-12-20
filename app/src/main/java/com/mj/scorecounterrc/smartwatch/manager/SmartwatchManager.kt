@@ -1,4 +1,4 @@
-package com.mj.scorecounterrc.smartwatch
+package com.mj.scorecounterrc.smartwatch.manager
 
 import android.app.Application.RECEIVER_EXPORTED
 import android.content.Context
@@ -10,6 +10,9 @@ import com.mj.scorecounterrc.broadcastreceiver.SCPebbleDataReceiver
 import com.mj.scorecounterrc.scorecounter.ScoreCounterConnectionManager
 import com.mj.scorecounterrc.data.manager.ScoreManager
 import com.mj.scorecounterrc.data.model.Score
+import com.mj.scorecounterrc.smartwatch.MsgTypeFromSmartwatch
+import com.mj.scorecounterrc.smartwatch.listener.PebbleListener
+import com.mj.scorecounterrc.smartwatch.listener.SmartwatchListener
 import dagger.hilt.android.qualifiers.ApplicationContext
 
 object SmartwatchManager {
@@ -18,11 +21,8 @@ object SmartwatchManager {
     private lateinit var context: Context
 
     private val scPebbleDataReceiver = SCPebbleDataReceiver(PebbleManager.pebbleAppUUID)
-
-    enum class MsgTypeFromSmartwatch {
-        SET_SCORE,
-        SYNC
-    }
+    // TODO inject
+    private val pebbleManager: PebbleManager = PebbleManager()
 
 
     init {
@@ -46,28 +46,42 @@ object SmartwatchManager {
     }
 
     private fun registerListeners() {
-        scPebbleDataReceiver.registerListener(PebbleManager.pebbleListener)
+        registerPebbleListeners()
+    }
+
+    private fun registerPebbleListeners() {
+        pebbleManager.registerListener(SmartwatchListener().apply {
+            onReceivedDataValidated = { score, timestamp, msgType ->
+                handleReceivedData(score, timestamp, msgType)
+            }
+        })
+
+        scPebbleDataReceiver.registerListener(PebbleListener().apply {
+            onDataReceived = { pebbleDict ->
+                pebbleManager.handleReceivedPebbleData(pebbleDict)
+            }
+        })
     }
 
     fun sendScoreToSmartwatch(score: Score, timestamp: Long) {
         context.let { app ->
-            PebbleManager.sendScoreToPebble(score, timestamp, app)
+            pebbleManager.sendScoreToPebble(score, timestamp, app)
         }
     }
 
     fun sendSyncRequestToSmartwatch() {
         context.let { app ->
-            PebbleManager.sendSyncRequestToPebble(app)
+            pebbleManager.sendSyncRequestToPebble(app)
         }
     }
 
-    fun startSmartwatchApp() {
+    private fun startSmartwatchApp() {
         context.let { app ->
-            PebbleManager.startPebbleApp(app)
+            pebbleManager.startPebbleApp(app)
         }
     }
 
-    fun handleReceivedData(score: Score, timestamp: Long, msgType: MsgTypeFromSmartwatch) {
+    private fun handleReceivedData(score: Score, timestamp: Long, msgType: MsgTypeFromSmartwatch) {
         if (msgType == MsgTypeFromSmartwatch.SET_SCORE) {
             // Accept new score set by smartwatch
             ScoreCounterConnectionManager.sendScoreToScoreCounter(score, timestamp)

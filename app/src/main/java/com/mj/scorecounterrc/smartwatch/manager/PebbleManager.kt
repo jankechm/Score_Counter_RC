@@ -1,24 +1,40 @@
-package com.mj.scorecounterrc.smartwatch
+package com.mj.scorecounterrc.smartwatch.manager
 
 import android.content.Context
 import com.getpebble.android.kit.PebbleKit
 import com.getpebble.android.kit.util.PebbleDictionary
 import com.mj.scorecounterrc.Constants
 import com.mj.scorecounterrc.data.model.Score
-import com.mj.scorecounterrc.smartwatch.listener.PebbleListener
+import com.mj.scorecounterrc.smartwatch.MsgTypeFromSmartwatch
+import com.mj.scorecounterrc.smartwatch.listener.SmartwatchListener
 import timber.log.Timber
+import java.lang.ref.WeakReference
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
-object PebbleManager {
+class PebbleManager {
 
-    val pebbleAppUUID: UUID = UUID.fromString(Constants.PEBBLE_APP_UUID)
+    companion object {
+        val pebbleAppUUID: UUID = UUID.fromString(Constants.PEBBLE_APP_UUID)
+    }
 
-    val pebbleListener by lazy {
-        PebbleListener().apply {
-            onDataReceived = { pebbleDict ->
-                handleReceivedPebbleData(pebbleDict)
-            }
+    private var listeners: MutableSet<WeakReference<SmartwatchListener>> =
+        ConcurrentHashMap.newKeySet()
+
+
+    fun registerListener(listener: SmartwatchListener) {
+        if (listeners.map { it.get() }.none { it?.equals(listener) == true }) {
+            listeners.add(WeakReference(listener))
+            listeners.removeIf { it.get() == null }
+
+            Timber.d("Added a SmartwatchListener, " +
+                    "${listeners.size} listeners total")
         }
+    }
+
+    fun unregisterListener(listener: SmartwatchListener) {
+        listeners.removeIf { it.get() == listener || it.get() == null }
+        Timber.d("Removed a SmartwatchListener, ${listeners.size} listeners total")
     }
 
     fun sendScoreToPebble(score: Score, timestamp: Long, context: Context) {
@@ -47,7 +63,7 @@ object PebbleManager {
         PebbleKit.sendDataToPebble(context, pebbleAppUUID, dict)
     }
 
-    private fun handleReceivedPebbleData(pebbleDict: PebbleDictionary?) {
+    fun handleReceivedPebbleData(pebbleDict: PebbleDictionary?) {
         if (pebbleDict == null) {
             Timber.i("Empty PebbleDictionary received.")
         }
@@ -67,12 +83,15 @@ object PebbleManager {
                             Constants.FROM_PEBBLE_TIMESTAMP_KEY)
 
                         if (score1 != null && score2 != null && timestamp != null) {
-                            var msgType = SmartwatchManager.MsgTypeFromSmartwatch.SET_SCORE
+                            var msgType = MsgTypeFromSmartwatch.SET_SCORE
                             if (pebbleCmdKeyInt == Constants.FROM_PEBBLE_CMD_SYNC_SCORE_VAL) {
-                                msgType = SmartwatchManager.MsgTypeFromSmartwatch.SYNC
+                                msgType = MsgTypeFromSmartwatch.SYNC
                             }
-                            SmartwatchManager.handleReceivedData(
-                                Score(score1, score2), timestamp, msgType)
+
+                            listeners.forEach {
+                                it.get()?.onReceivedDataValidated?.invoke(
+                                    Score(score1, score2), timestamp, msgType)
+                            }
                         }
                     }
                 }

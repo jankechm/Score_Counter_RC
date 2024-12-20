@@ -30,6 +30,7 @@ import com.mj.scorecounterrc.R
 import com.mj.scorecounterrc.data.manager.ScoreManager
 import com.mj.scorecounterrc.data.model.ScoreSide
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ScoreCounter(isScFacingDown: State<Boolean>, toggleSpecialButtons: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -37,7 +38,15 @@ fun ScoreCounter(isScFacingDown: State<Boolean>, toggleSpecialButtons: () -> Uni
             ScoreCounterBack()
         }
 
-        Row {
+        Row(
+            modifier = Modifier.combinedClickable(
+                onLongClickLabel = "Show special buttons",
+                onLongClick = {
+                    toggleSpecialButtons()
+                },
+                onClick = {}
+            ),
+        ) {
             val scOrientationIconPainter: Painter
             val orientationContentDesc: String
 
@@ -67,8 +76,8 @@ fun ScoreCounter(isScFacingDown: State<Boolean>, toggleSpecialButtons: () -> Uni
                 )
             }
 
-            ScoreCounterText(ScoreSide.LEFT, toggleSpecialButtons)
-            ScoreCounterText(ScoreSide.RIGHT, toggleSpecialButtons)
+            ScoreCounterText(ScoreSide.LEFT)
+            ScoreCounterText(ScoreSide.RIGHT)
 
             Box(
                 modifier = Modifier
@@ -91,25 +100,17 @@ fun ScoreCounter(isScFacingDown: State<Boolean>, toggleSpecialButtons: () -> Uni
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ScoreCounterText(scoreSide: ScoreSide, toggleSpecialButtons: () -> Unit) {
+fun ScoreCounterText(scoreSide: ScoreSide) {
     val score by ScoreManager.localScore.collectAsStateWithLifecycle()
 
     Text(
         modifier = Modifier
             .size(110.dp, 94.dp)
             .border(border = BorderStroke(4.dp, Color.Black))
-            .wrapContentHeight(align = Alignment.CenterVertically)
-            .combinedClickable(
-                onLongClickLabel = "Show special buttons",
-                onLongClick = {
-                    toggleSpecialButtons()
-                },
-                onClick = {}
-            ),
+            .wrapContentHeight(align = Alignment.CenterVertically),
         text = if (scoreSide == ScoreSide.LEFT) score.left.toString()
-        else score.right.toString(),
+            else score.right.toString(),
         textAlign = TextAlign.Center,
         fontSize = 38.sp,
         fontWeight = FontWeight.Bold,

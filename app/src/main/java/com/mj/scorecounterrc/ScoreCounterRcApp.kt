@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothAdapter
 import android.content.IntentFilter
 import android.os.Build
 import com.mj.scorecounterrc.broadcastreceiver.BtStateChangedReceiver
-import com.mj.scorecounterrc.smartwatch.SmartwatchManager
 import dagger.hilt.android.HiltAndroidApp
 import fr.bipi.treessence.file.FileLoggerTree
 import timber.log.Timber

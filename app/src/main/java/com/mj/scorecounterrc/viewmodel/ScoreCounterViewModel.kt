@@ -7,7 +7,7 @@ import com.mj.scorecounterrc.data.manager.ScoreManager
 import com.mj.scorecounterrc.data.model.Score
 import com.mj.scorecounterrc.listener.ConnectionEventListener
 import com.mj.scorecounterrc.scorecounter.ScoreCounterConnectionManager
-import com.mj.scorecounterrc.smartwatch.SmartwatchManager
+import com.mj.scorecounterrc.smartwatch.manager.SmartwatchManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

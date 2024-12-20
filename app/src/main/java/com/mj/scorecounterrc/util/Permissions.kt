@@ -1,4 +1,4 @@
-package com.mj.scorecounterrc
+package com.mj.scorecounterrc.util
 
 import android.Manifest
 import android.app.Activity
@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.mj.scorecounterrc.Constants
 
 
 fun Context.hasPermission(permission: String): Boolean =
@@ -36,5 +37,6 @@ fun Context.requestBtPermissions(activity: Activity) {
 fun requestNotificationsPermission(activity: Activity) {
     ActivityCompat.requestPermissions(activity,
         arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-        Constants.NOTIFICATIONS_PERMISSIONS_REQUEST_CODE)
+        Constants.NOTIFICATIONS_PERMISSIONS_REQUEST_CODE
+    )
 }

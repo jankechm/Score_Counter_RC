@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BasicAlertDialog
@@ -228,7 +230,10 @@ fun ConnectionDialog(
                     .border(border = BorderStroke(2.dp, Color.Black)),
                 contentAlignment = Alignment.TopCenter,
             ) {
-                LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
+                LazyColumn(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
 //                    items(
 //                        count = bleScanResults.value.size,
 //                    ) { index ->

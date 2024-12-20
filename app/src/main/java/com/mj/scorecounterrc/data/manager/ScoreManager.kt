@@ -114,7 +114,7 @@ object ScoreManager {
 
     fun saveReceivedScore(score: Score, timestamp: Long) {
         _receivedScore.update {
-            Score(score.left, score.right)
+            score.copy()
         }
         ScoreManager.timestamp = timestamp
     }

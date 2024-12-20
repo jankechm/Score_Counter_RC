@@ -44,7 +44,11 @@ class ConnectionViewModel @Inject constructor(private val bleScanner: BLEScanner
                 )
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000L),
+            emptyList()
+        )
 
 
     private val connectionEventListener = ConnectionEventListener().apply {

@@ -22,7 +22,7 @@ import com.mj.scorecounterrc.ble.ConnectionManager.isConnected
 import com.mj.scorecounterrc.broadcastreceiver.BtStateChangedReceiver
 import com.mj.scorecounterrc.data.manager.AppCfgManager
 import com.mj.scorecounterrc.data.model.Score
-import com.mj.scorecounterrc.hasBtPermissions
+import com.mj.scorecounterrc.util.hasBtPermissions
 import com.mj.scorecounterrc.listener.BtBroadcastListener
 import com.mj.scorecounterrc.listener.ConnectionEventListener
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.atomic.AtomicBoolean
 
 object ScoreCounterConnectionManager {
 
@@ -48,7 +49,7 @@ object ScoreCounterConnectionManager {
 
     private var manuallyDisconnected = false
     private var shouldTryConnect = false
-    private var isSomeConnectionCoroutineRunning = false
+    private val isSomeConnectionCoroutineRunning = AtomicBoolean(false)
 
     private var msgBuffer: String = ""
 
@@ -196,11 +197,6 @@ object ScoreCounterConnectionManager {
 
     @SuppressLint("MissingPermission")
     fun startConnectionToPersistedDeviceCoroutine() {
-        if (isSomeConnectionCoroutineRunning) {
-            Timber.i( "Some connection coroutine already running!")
-            return
-        }
-
         val savedDeviceAddress = StorageManager.getSavedDeviceAddress()
 
         if (btAdapter != null && savedDeviceAddress != null) {
@@ -224,8 +220,6 @@ object ScoreCounterConnectionManager {
                 }
             }
         }
-
-        isSomeConnectionCoroutineRunning = false
     }
 
     private fun startReconnectionCoroutine() {
@@ -240,14 +234,14 @@ object ScoreCounterConnectionManager {
     }
 
     private suspend fun tryConnect(bleDevice: BluetoothDevice, reconnectionType: ReconnectionType) {
-        if (isSomeConnectionCoroutineRunning) {
+        if (isSomeConnectionCoroutineRunning.get()) {
             Timber.i( "Some connection coroutine already running!")
             return
         }
 
-        ConnectionManager.disconnectAllDevices()
+        isSomeConnectionCoroutineRunning.set(true)
 
-        isSomeConnectionCoroutineRunning = true
+        ConnectionManager.disconnectAllDevices()
 
         val maxImmediateRetries = 3
         val initialDelayMillis = 100L
@@ -283,7 +277,7 @@ object ScoreCounterConnectionManager {
             }
         }
 
-        isSomeConnectionCoroutineRunning = false
+        isSomeConnectionCoroutineRunning.set(false)
     }
 
     private fun sendDayTimeToScoreCounter(btDevice: BluetoothDevice,
