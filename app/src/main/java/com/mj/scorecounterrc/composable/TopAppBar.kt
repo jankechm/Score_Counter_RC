@@ -1,7 +1,10 @@
 package com.mj.scorecounterrc.composable
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,10 +47,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mj.scorecounterrc.R
@@ -58,6 +63,9 @@ import com.mj.scorecounterrc.ui.theme.ScScanResultContainerClr
 import com.mj.scorecounterrc.ui.theme.ScanButtonContainerClr
 import com.mj.scorecounterrc.ui.theme.ScoreCounterRCTheme
 import com.mj.scorecounterrc.ui.theme.TopAppBarContainerClr
+import com.mj.scorecounterrc.util.findActivity
+import com.mj.scorecounterrc.util.hasBtPermissions
+import com.mj.scorecounterrc.util.openAppSettings
 import com.mj.scorecounterrc.viewmodel.ConnectionViewModel
 import com.mj.scorecounterrc.viewmodel.ConnectionViewModel.ConnectionViewModelEvent
 import com.mj.scorecounterrc.viewmodel.EnableRequestSharedViewModel
@@ -97,16 +105,57 @@ fun ScRcTopAppBar(
     bleDeviceCards: State<List<DeviceCard>>,
     bluetoothEnableRequest: State<Boolean>
 ) {
+    val btPermissions = arrayOf(
+        Manifest.permission.BLUETOOTH_CONNECT,
+        Manifest.permission.BLUETOOTH_SCAN
+    )
+    val context = LocalContext.current
+    val activity = context.findActivity()
+
     var showConnectionDialog by rememberSaveable { mutableStateOf(false) }
+    var showRequestBtPermissionsRationale by rememberSaveable { mutableStateOf(false) }
+    var showAppSettingsDialog by rememberSaveable { mutableStateOf(false) }
+
+    val bluetoothPermissionResultLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { result ->
+            val containsPermanentDenial = result.any {
+                !it.value && !shouldShowRequestPermissionRationale(activity, it.key)
+            }
+            val containsDenial = result.values.any { !it }
+            val allGranted = result.values.all { it }
+
+            when {
+                containsPermanentDenial -> {
+                    showAppSettingsDialog = true
+                }
+                containsDenial -> {
+                    showRequestBtPermissionsRationale = true
+                }
+//                allGranted -> {
+//                    showConnectionDialog = true
+//                }
+            }
+        }
+    )
 
     TopAppBar(
         title = { Text(text = "Score Counter RC") },
         actions = {
-            IconButton(onClick = { showConnectionDialog = true }) {
-                Icon(
-                    painter = painterResource(id = R.drawable.bluetooth),
-                    contentDescription = "Connection"
-                )
+            IconButton(
+                onClick = {
+                    bluetoothPermissionResultLauncher.launch(
+                        arrayOf(
+                            Manifest.permission.BLUETOOTH_CONNECT,
+                            Manifest.permission.BLUETOOTH_SCAN
+                        )
+                    )
+                    showConnectionDialog = context.hasBtPermissions()
+                }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.bluetooth),
+                        contentDescription = "Connection"
+                    )
             }
             IconButton(onClick = { /*TODO*/ }) {
                 Icon(
@@ -141,6 +190,29 @@ fun ScRcTopAppBar(
                 bleDeviceCards = bleDeviceCards
             )
         }
+    }
+
+    if (showRequestBtPermissionsRationale) {
+        PermissionDialog(
+            permissionTextProvider = BluetoothPermissionsTextProvider(),
+            isPermanentlyDeclined = false,
+            onDismiss = { showRequestBtPermissionsRationale = false },
+            onConfirmBtnClick = {
+                showRequestBtPermissionsRationale = false
+                bluetoothPermissionResultLauncher.launch(btPermissions)
+            }
+        )
+    }
+    if (showAppSettingsDialog) {
+        PermissionDialog(
+            permissionTextProvider = BluetoothPermissionsTextProvider(),
+            isPermanentlyDeclined = true,
+            onDismiss = { showAppSettingsDialog = false },
+            onConfirmBtnClick = {
+                showAppSettingsDialog = false
+                activity.openAppSettings()
+            }
+        )
     }
 }
 
