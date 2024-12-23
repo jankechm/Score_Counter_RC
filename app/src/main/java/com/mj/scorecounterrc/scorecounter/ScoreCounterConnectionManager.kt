@@ -51,7 +51,7 @@ class ScoreCounterConnectionManager @Inject constructor(
     private var bleScoreCounter: BluetoothDevice? = null
     private var writableDisplayChar: BluetoothGattCharacteristic? = null
 
-    private var manuallyDisconnected = false
+    var manuallyDisconnected = false
     private var shouldTryConnect = false
     private val isSomeConnectionCoroutineRunning = AtomicBoolean(false)
 
@@ -97,7 +97,7 @@ class ScoreCounterConnectionManager @Inject constructor(
                 // Trigger new sync
                 scoreSync.trySync()
 
-                // TODO
+                // TODO start service from composable or activity
 //                val intent = Intent(this@BleScoreCounterApp, BleService::class.java)
 //                startForegroundService(intent)
 
@@ -109,6 +109,7 @@ class ScoreCounterConnectionManager @Inject constructor(
                 if (!manuallyDisconnected) {
                     startReconnectionCoroutine()
                 }
+                // TODO start service from composable or activity
 //                else {
 //                    val intent = Intent(this@BleScoreCounterApp, BleService::class.java)
 //                    stopService(intent)
@@ -358,5 +359,9 @@ class ScoreCounterConnectionManager @Inject constructor(
 
     override fun requestScoreSync() {
         sendSyncRequestToScoreCounter()
+    }
+
+    fun disconnect() {
+        ConnectionManager.disconnectAllDevices()
     }
 }

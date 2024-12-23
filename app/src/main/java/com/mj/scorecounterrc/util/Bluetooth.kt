@@ -18,9 +18,8 @@ class BluetoothRequest {
             return resultCode == Activity.RESULT_OK
         }
     }
+}
 
-
-    fun Context.isBleSupported(): Boolean {
-        return packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)
-    }
+fun Context.isBleSupported(): Boolean {
+    return packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)
 }

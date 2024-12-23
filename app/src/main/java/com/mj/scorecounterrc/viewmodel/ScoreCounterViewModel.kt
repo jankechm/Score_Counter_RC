@@ -159,7 +159,7 @@ class ScoreCounterViewModel @Inject constructor(
         storageManager.saveTimestamp(timestamp)
     }
 
-    fun loadPersistedScore() {
+    private fun loadPersistedScore() {
         val score1 = storageManager.getScore1()
         val score2 = storageManager.getScore2()
         val isFacingToTheReferee = storageManager.getSCOrientation()

@@ -3,6 +3,7 @@ package com.mj.scorecounterrc.composable
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -66,8 +67,10 @@ import com.mj.scorecounterrc.ui.theme.TopAppBarContainerClr
 import com.mj.scorecounterrc.util.findActivity
 import com.mj.scorecounterrc.util.hasBtPermissions
 import com.mj.scorecounterrc.util.openAppSettings
+import com.mj.scorecounterrc.util.isBleSupported
 import com.mj.scorecounterrc.viewmodel.ConnectionViewModel
 import com.mj.scorecounterrc.viewmodel.ConnectionViewModel.ConnectionViewModelEvent
+import com.mj.scorecounterrc.viewmodel.ConnectionViewModel.ConnectionState
 import com.mj.scorecounterrc.viewmodel.EnableRequestSharedViewModel
 import com.mj.scorecounterrc.viewmodel.EnableRequestSharedViewModel.EnableRequestedEvent
 
@@ -78,7 +81,7 @@ fun ScRcTopAppBarRoot() {
     val enableRequestSharedViewModel = hiltViewModel<EnableRequestSharedViewModel>()
 
     val onConnectionViewModelEvent = connectionViewModel::onEvent
-    val isConnected = connectionViewModel.isConnected.collectAsStateWithLifecycle()
+    val connectionState = connectionViewModel.connectionState.collectAsStateWithLifecycle()
     val isScanning = connectionViewModel.isScanning.collectAsStateWithLifecycle()
     val bleDeviceCards = connectionViewModel.bleDeviceCards.collectAsStateWithLifecycle()
     val bluetoothEnableRequest = connectionViewModel.bluetoothEnableRequest
@@ -88,7 +91,7 @@ fun ScRcTopAppBarRoot() {
     ScRcTopAppBar(
         onConnectionViewModelEvent = onConnectionViewModelEvent,
         onEnableRequestEvent = onEnableRequestEvent,
-        isConnected,
+        connectionState,
         isScanning,
         bleDeviceCards,
         bluetoothEnableRequest
@@ -100,7 +103,7 @@ fun ScRcTopAppBarRoot() {
 fun ScRcTopAppBar(
     onConnectionViewModelEvent: (ConnectionViewModelEvent) -> Unit,
     onEnableRequestEvent: (EnableRequestedEvent) -> Unit,
-    isConnected: State<Boolean>,
+    connectionState: State<ConnectionState>,
     isScanning: State<Boolean>,
     bleDeviceCards: State<List<DeviceCard>>,
     bluetoothEnableRequest: State<Boolean>
@@ -142,18 +145,25 @@ fun ScRcTopAppBar(
     TopAppBar(
         title = { Text(text = "Score Counter RC") },
         actions = {
+            val bluetoothIconResourceId = when(connectionState.value) {
+                ConnectionState.CONNECTED -> R.drawable.bluetooth_connected
+                ConnectionState.NOT_CONNECTED -> R.drawable.bluetooth
+                ConnectionState.MANUALLY_DISCONNECTED -> R.drawable.bluetooth_disabled
+            }
+
             IconButton(
                 onClick = {
-                    bluetoothPermissionResultLauncher.launch(
-                        arrayOf(
-                            Manifest.permission.BLUETOOTH_CONNECT,
-                            Manifest.permission.BLUETOOTH_SCAN
-                        )
-                    )
-                    showConnectionDialog = context.hasBtPermissions()
+                    if (context.isBleSupported()) {
+                        bluetoothPermissionResultLauncher.launch(btPermissions)
+                        showConnectionDialog = context.hasBtPermissions()
+                    } else {
+                        Toast.makeText(context,
+                            "Bluetooth Low Energy is not supported on this device!",
+                            Toast.LENGTH_LONG).show()
+                    }
                 }) {
                     Icon(
-                        painter = painterResource(id = R.drawable.bluetooth),
+                        painter = painterResource(id = bluetoothIconResourceId),
                         contentDescription = "Connection"
                     )
             }
@@ -182,7 +192,7 @@ fun ScRcTopAppBar(
             ConnectionDialog(
                 onDismiss = { showConnectionDialog = false },
                 onEvent = onConnectionViewModelEvent,
-                isConnected = isConnected,
+                connectionState = connectionState,
                 isScanning = isScanning,
                 bleDeviceCards = bleDeviceCards
             )
@@ -224,7 +234,7 @@ fun ConnectionDialogPreview() {
         ConnectionDialog(
             onDismiss = {},
             onEvent = {},
-            isConnected = mutableStateOf(true),
+            connectionState = mutableStateOf(ConnectionState.CONNECTED),
             isScanning = mutableStateOf(false),
             bleDeviceCards = mutableStateOf(listOf( // Pass mock DeviceCard list
                 DeviceCard("Device 1", "12:34:56:78:90:AB"),
@@ -240,7 +250,7 @@ fun ConnectionDialogPreview() {
 fun ConnectionDialog(
     onDismiss: () -> Unit,
     onEvent: (ConnectionViewModelEvent) -> Unit,
-    isConnected: State<Boolean>,
+    connectionState: State<ConnectionState>,
     isScanning: State<Boolean>,
     bleDeviceCards: State<List<DeviceCard>>
 ) {
@@ -269,9 +279,10 @@ fun ConnectionDialog(
 
             Row {
                 Button(
-                    modifier = Modifier.alpha(if (isConnected.value) 1f else 0f),
+                    modifier = Modifier.alpha(
+                        if (connectionState.value == ConnectionState.CONNECTED) 1f else 0f),
                     onClick = {
-                        if (isConnected.value) {
+                        if (connectionState.value == ConnectionState.CONNECTED) {
                             onEvent(ConnectionViewModelEvent.Disconnect)
                         }
                     },

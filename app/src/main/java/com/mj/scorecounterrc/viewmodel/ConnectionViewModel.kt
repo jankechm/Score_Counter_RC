@@ -27,12 +27,14 @@ import javax.inject.Inject
 @HiltViewModel
 class ConnectionViewModel @Inject constructor(
     private val bleScanner: BLEScanner,
-    scoreCounterConnectionManager: ScoreCounterConnectionManager
+    private val scoreCounterConnectionManager: ScoreCounterConnectionManager
 ) : ViewModel() {
 
-    private val _isConnected = MutableStateFlow(
-        scoreCounterConnectionManager.isBleScoreCounterConnected())
-    val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
+    private val _connectionState = MutableStateFlow(
+        if (scoreCounterConnectionManager.isBleScoreCounterConnected())
+            ConnectionState.CONNECTED else if (scoreCounterConnectionManager.manuallyDisconnected)
+                ConnectionState.MANUALLY_DISCONNECTED else ConnectionState.NOT_CONNECTED)
+    val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
 
     private val _isScanning = MutableStateFlow(false)
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
@@ -62,10 +64,13 @@ class ConnectionViewModel @Inject constructor(
 
     private val connectionEventListener = ConnectionEventListener().apply {
         onDisconnect = { _ ->
-            _isConnected.update { false }
+            _connectionState.update {
+                if (scoreCounterConnectionManager.manuallyDisconnected)
+                    ConnectionState.MANUALLY_DISCONNECTED else ConnectionState.NOT_CONNECTED }
         }
         onMtuChanged = { _,_ ->
-            _isConnected.update { true }
+            scoreCounterConnectionManager.manuallyDisconnected = false
+            _connectionState.update { ConnectionState.CONNECTED }
         }
     }
 
@@ -109,30 +114,34 @@ class ConnectionViewModel @Inject constructor(
 
     fun onEvent(event: ConnectionViewModelEvent) {
         when (event) {
-            ConnectionViewModelEvent.ConnectionButtonClicked -> {
-                TODO()
-            }
             ConnectionViewModelEvent.SettingsButtonClicked -> {
                 TODO()
             }
 
             is ConnectionViewModelEvent.Connect -> TODO()
-            ConnectionViewModelEvent.Disconnect -> TODO()
+            ConnectionViewModelEvent.Disconnect -> {
+                scoreCounterConnectionManager.manuallyDisconnected = true
+                scoreCounterConnectionManager.disconnect()
+            }
             ConnectionViewModelEvent.StartScan -> startScan()
             ConnectionViewModelEvent.StopScan -> stopScan()
-            ConnectionViewModelEvent.ResetBluetoothEnableRequest -> {
+            ConnectionViewModelEvent.ResetBluetoothEnableRequest ->
                 _bluetoothEnableRequest.value = false
-            }
         }
     }
 
     sealed interface ConnectionViewModelEvent {
-        data object ConnectionButtonClicked : ConnectionViewModelEvent
         data object SettingsButtonClicked : ConnectionViewModelEvent
         data object StartScan : ConnectionViewModelEvent
         data object StopScan : ConnectionViewModelEvent
         data class Connect(val device: BluetoothDevice) : ConnectionViewModelEvent
         data object Disconnect : ConnectionViewModelEvent
         data object ResetBluetoothEnableRequest : ConnectionViewModelEvent
+    }
+
+    enum class ConnectionState {
+        CONNECTED,
+        NOT_CONNECTED,
+        MANUALLY_DISCONNECTED,
     }
 }
