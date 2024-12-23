@@ -132,9 +132,9 @@ fun ScRcTopAppBar(
                 containsDenial -> {
                     showRequestBtPermissionsRationale = true
                 }
-//                allGranted -> {
-//                    showConnectionDialog = true
-//                }
+                allGranted -> {
+                    showConnectionDialog = true
+                }
             }
         }
     )
@@ -173,9 +173,6 @@ fun ScRcTopAppBar(
         if (bluetoothEnableRequest.value) {
             LaunchedEffect(true) {
                 onEnableRequestEvent(EnableRequestedEvent.EnableBluetooth)
-                // recompose
-                showConnectionDialog = false
-                showConnectionDialog = true
             }
         }
 
@@ -189,6 +186,9 @@ fun ScRcTopAppBar(
                 isScanning = isScanning,
                 bleDeviceCards = bleDeviceCards
             )
+        } else {
+            // Try next time
+            showConnectionDialog = false
         }
     }
 
