@@ -5,7 +5,6 @@ import android.os.Looper
 import com.mj.scorecounterrc.data.manager.ScoreManager
 import com.mj.scorecounterrc.data.model.Score
 import com.mj.scorecounterrc.scorecounter.ScoreCounterMessageSender
-import com.mj.scorecounterrc.smartwatch.DataReceiver
 import com.mj.scorecounterrc.smartwatch.MsgTypeFromSmartwatch
 import com.mj.scorecounterrc.smartwatch.manager.SmartwatchManager
 import timber.log.Timber
@@ -19,7 +18,7 @@ import javax.inject.Singleton
 class ScoreSyncImpl @Inject constructor(
     private val smartwatchManager: Provider<SmartwatchManager>,
     private val scoreCounterMessageSender: Provider<ScoreCounterMessageSender>
-) : DataReceiver, ScoreSync {
+) : ScoreSync {
 
     private val waitingForWatchData: AtomicBoolean = AtomicBoolean(false)
     private val waitingForSCData: AtomicBoolean = AtomicBoolean(false)
@@ -194,7 +193,7 @@ class ScoreSyncImpl @Inject constructor(
         getSCDataAttempt.set(0)
     }
 
-    override fun onDataReceived(score: Score, timestamp: Long, msgType: MsgTypeFromSmartwatch) {
+    fun onDataReceived(score: Score, timestamp: Long, msgType: MsgTypeFromSmartwatch) {
         if (msgType == MsgTypeFromSmartwatch.SET_SCORE) {
             // Accept new score set by smartwatch
             scoreCounterMessageSender.get().sendScore(score, timestamp)

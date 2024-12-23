@@ -5,7 +5,6 @@ import com.mj.scorecounterrc.ScoreSyncImpl
 import com.mj.scorecounterrc.broadcastreceiver.SCPebbleDataReceiver
 import com.mj.scorecounterrc.scorecounter.ScoreCounterConnectionManager
 import com.mj.scorecounterrc.scorecounter.ScoreCounterMessageSender
-import com.mj.scorecounterrc.smartwatch.DataReceiver
 import com.mj.scorecounterrc.smartwatch.manager.PebbleManager
 import dagger.Binds
 import dagger.Module
@@ -28,9 +27,6 @@ abstract class RcAppModule {
     abstract fun bindScoreCounterMessageSender(
         scoreCounterConnectionManager: ScoreCounterConnectionManager
     ): ScoreCounterMessageSender
-
-    @Binds
-    abstract fun bindDataReceiver(scoreSyncImpl: ScoreSyncImpl): DataReceiver
 
     @Binds
     abstract fun bindScoreSync(scoreSync: ScoreSyncImpl): ScoreSync

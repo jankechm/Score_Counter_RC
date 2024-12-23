@@ -5,9 +5,9 @@ import android.content.Context
 import android.content.IntentFilter
 import android.os.Build
 import com.getpebble.android.kit.PebbleKit
+import com.mj.scorecounterrc.ScoreSyncImpl
 import com.mj.scorecounterrc.broadcastreceiver.SCPebbleDataReceiver
 import com.mj.scorecounterrc.data.model.Score
-import com.mj.scorecounterrc.smartwatch.DataReceiver
 import com.mj.scorecounterrc.smartwatch.listener.PebbleListener
 import com.mj.scorecounterrc.smartwatch.listener.SmartwatchListener
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,9 +18,15 @@ import javax.inject.Singleton
 class SmartwatchManager @Inject constructor(
     @ApplicationContext private var context: Context,
     private val pebbleManager: PebbleManager,
-    private val dataReceiver: DataReceiver,
+    private val scoreSync: ScoreSyncImpl,
     private val scPebbleDataReceiver: SCPebbleDataReceiver
 ) {
+
+    private val scoreSyncSmartWatchListener = SmartwatchListener().apply {
+        onReceivedDataValidated = { score, timestamp, msgType ->
+            scoreSync.onDataReceived(score, timestamp, msgType)
+        }
+    }
 
     init {
         registerListeners()
@@ -47,11 +53,7 @@ class SmartwatchManager @Inject constructor(
     }
 
     private fun registerPebbleListeners() {
-        pebbleManager.registerListener(SmartwatchListener().apply {
-            onReceivedDataValidated = { score, timestamp, msgType ->
-                dataReceiver.onDataReceived(score, timestamp, msgType)
-            }
-        })
+        pebbleManager.registerListener(scoreSyncSmartWatchListener)
 
         scPebbleDataReceiver.registerListener(PebbleListener().apply {
             onDataReceived = { pebbleDict ->

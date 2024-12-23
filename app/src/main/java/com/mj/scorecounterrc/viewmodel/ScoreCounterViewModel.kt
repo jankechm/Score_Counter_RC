@@ -1,9 +1,11 @@
 package com.mj.scorecounterrc.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.mj.scorecounterrc.data.manager.StorageManager
+import androidx.lifecycle.viewModelScope
+import com.mj.scorecounterrc.Constants
 import com.mj.scorecounterrc.ble.ConnectionManager
 import com.mj.scorecounterrc.data.manager.ScoreManager
+import com.mj.scorecounterrc.data.manager.StorageManager
 import com.mj.scorecounterrc.data.model.Score
 import com.mj.scorecounterrc.listener.ConnectionEventListener
 import com.mj.scorecounterrc.scorecounter.ScoreCounterConnectionManager
@@ -13,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -51,6 +54,28 @@ class ScoreCounterViewModel @Inject constructor(
     init {
         ConnectionManager.registerListener(connectionEventListener)
         loadPersistedScore()
+
+        // Update local score based on received score.
+        viewModelScope.launch {
+            ScoreManager.receivedScore.collect {
+                // Skip the initial value to avoid conflict with loaded score from persisted
+                // storage
+                if (it.left <= Constants.MAX_SCORE && it.right <= Constants.MAX_SCORE) {
+                    // Determining which score is left and which is right to the phone's
+                    // perspective.
+                    if (isScFacingToTheReferee.value) {
+                        ScoreManager.setScore(it.left, it.right)
+                    } else {
+                        ScoreManager.setScore(it.right, it.left)
+                    }
+                    ScoreManager.confirmNewScore(false)
+
+                    val localScore = ScoreManager.localScore.value
+                    persistScore(localScore.left, localScore.right, isScFacingToTheReferee.value,
+                        ScoreManager.timestamp)
+                }
+            }
+        }
     }
 
     fun onEvent(event: ScoreCounterEvent) {
@@ -94,7 +119,7 @@ class ScoreCounterViewModel @Inject constructor(
                 var score1 = score.left
                 var score2 = score.right
 
-                if (_isScFacingToTheReferee.value) {
+                if (!_isScFacingToTheReferee.value) {
                     score1 = score.right
                     score2 = score.left
                 }
