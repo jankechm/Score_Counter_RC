@@ -96,11 +96,6 @@ class ScoreCounterConnectionManager @Inject constructor(
 
                 // Trigger new sync
                 scoreSync.trySync()
-
-                // TODO start service from composable or activity
-//                val intent = Intent(this@BleScoreCounterApp, BleService::class.java)
-//                startForegroundService(intent)
-
             }
             onNotificationsEnabled = { _,_ -> Timber.i( "Enabled notification") }
             onDisconnect = { bleDevice ->
@@ -109,11 +104,6 @@ class ScoreCounterConnectionManager @Inject constructor(
                 if (!manuallyDisconnected) {
                     startReconnectionCoroutine()
                 }
-                // TODO start service from composable or activity
-//                else {
-//                    val intent = Intent(this@BleScoreCounterApp, BleService::class.java)
-//                    stopService(intent)
-//                }
 
                 context.let {
                     handler.post {

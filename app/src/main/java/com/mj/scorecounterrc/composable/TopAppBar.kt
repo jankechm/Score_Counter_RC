@@ -3,6 +3,7 @@ package com.mj.scorecounterrc.composable
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -54,10 +55,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
+import androidx.core.content.ContextCompat.startForegroundService
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mj.scorecounterrc.R
 import com.mj.scorecounterrc.data.model.DeviceCard
+import com.mj.scorecounterrc.service.RcService
 import com.mj.scorecounterrc.ui.theme.ConnectButtonContainerClr
 import com.mj.scorecounterrc.ui.theme.DisconnectButtonContainerClr
 import com.mj.scorecounterrc.ui.theme.ScScanResultContainerClr
@@ -73,6 +76,7 @@ import com.mj.scorecounterrc.viewmodel.ConnectionViewModel.ConnectionViewModelEv
 import com.mj.scorecounterrc.viewmodel.ConnectionViewModel.ConnectionState
 import com.mj.scorecounterrc.viewmodel.EnableRequestSharedViewModel
 import com.mj.scorecounterrc.viewmodel.EnableRequestSharedViewModel.EnableRequestedEvent
+import android.content.Intent
 
 
 @Composable
@@ -112,12 +116,14 @@ fun ScRcTopAppBar(
         Manifest.permission.BLUETOOTH_CONNECT,
         Manifest.permission.BLUETOOTH_SCAN
     )
+
     val context = LocalContext.current
     val activity = context.findActivity()
 
     var showConnectionDialog by rememberSaveable { mutableStateOf(false) }
     var showRequestBtPermissionsRationale by rememberSaveable { mutableStateOf(false) }
-    var showAppSettingsDialog by rememberSaveable { mutableStateOf(false) }
+    var showRequestNotificationPermissionRationale by rememberSaveable { mutableStateOf(false) }
+    var showBtAppSettingsDialog by rememberSaveable { mutableStateOf(false) }
 
     val bluetoothPermissionResultLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -130,7 +136,7 @@ fun ScRcTopAppBar(
 
             when {
                 containsPermanentDenial -> {
-                    showAppSettingsDialog = true
+                    showBtAppSettingsDialog = true
                 }
                 containsDenial -> {
                     showRequestBtPermissionsRationale = true
@@ -138,6 +144,17 @@ fun ScRcTopAppBar(
                 allGranted -> {
                     showConnectionDialog = true
                 }
+            }
+        }
+    )
+
+    val notificationPermissionResultLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { result ->
+            if (!result && shouldShowRequestPermissionRationale(
+                    activity, Manifest.permission.POST_NOTIFICATIONS))
+            {
+                showRequestNotificationPermissionRationale = true
             }
         }
     )
@@ -213,14 +230,37 @@ fun ScRcTopAppBar(
             }
         )
     }
-    if (showAppSettingsDialog) {
+    if (showBtAppSettingsDialog) {
         PermissionDialog(
             permissionTextProvider = BluetoothPermissionsTextProvider(),
             isPermanentlyDeclined = true,
-            onDismiss = { showAppSettingsDialog = false },
+            onDismiss = { showBtAppSettingsDialog = false },
             onConfirmBtnClick = {
-                showAppSettingsDialog = false
+                showBtAppSettingsDialog = false
                 activity.openAppSettings()
+            }
+        )
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        connectionState.value == ConnectionState.CONNECTED) {
+        LaunchedEffect(true) {
+            notificationPermissionResultLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+
+            val intent = Intent(context, RcService::class.java)
+            startForegroundService(context, intent)
+        }
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            showRequestNotificationPermissionRationale) {
+        PermissionDialog(
+            permissionTextProvider = NotificationPermissionTextProvider(),
+            isPermanentlyDeclined = false,
+            onDismiss = { showRequestNotificationPermissionRationale = false },
+            onConfirmBtnClick = {
+                showRequestNotificationPermissionRationale = false
+                notificationPermissionResultLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         )
     }

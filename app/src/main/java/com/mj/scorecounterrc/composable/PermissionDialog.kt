@@ -73,3 +73,22 @@ class BluetoothPermissionsTextProvider: PermissionTextProvider {
         }
     }
 }
+
+class NotificationPermissionTextProvider: PermissionTextProvider {
+    override fun getDescription(isPermanentlyDeclined: Boolean): String {
+        return if(isPermanentlyDeclined) {
+            """
+                If you changed your mind and want the notification to be displayed, please, 
+                navigate to App Settings and manually grant Notification permission to allow 
+                a foreground service notification to be displayed.
+            """.trimIndent()
+        } else {
+            """
+                The system requires apps to be granted Notification permission in order to display 
+                a notification for the running foreground service which handles communication 
+                with a smartwatch Score Counter. If you don't allow the permission, the service can 
+                run, but the notification won't be displayed.
+            """.trimIndent()
+        }
+    }
+}
