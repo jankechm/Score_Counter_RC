@@ -4,9 +4,9 @@ import android.os.Handler
 import android.os.Looper
 import com.mj.scorecounterrc.data.manager.ScoreManager
 import com.mj.scorecounterrc.data.model.Score
-import com.mj.scorecounterrc.scorecounter.ScoreCounterMessageSender
-import com.mj.scorecounterrc.smartwatch.MsgTypeFromSmartwatch
-import com.mj.scorecounterrc.smartwatch.manager.SmartwatchManager
+import com.mj.scorecounterrc.communication.scorecounter.ScoreCounterMessageSender
+import com.mj.scorecounterrc.communication.smartwatch.MsgTypeFromSmartwatch
+import com.mj.scorecounterrc.communication.smartwatch.manager.SmartwatchManager
 import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger

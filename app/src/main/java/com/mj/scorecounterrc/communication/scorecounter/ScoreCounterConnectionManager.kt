@@ -1,4 +1,4 @@
-package com.mj.scorecounterrc.scorecounter
+package com.mj.scorecounterrc.communication.scorecounter
 
 import android.Manifest
 import android.annotation.SuppressLint

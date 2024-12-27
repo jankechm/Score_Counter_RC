@@ -1,12 +1,12 @@
-package com.mj.scorecounterrc.smartwatch.manager
+package com.mj.scorecounterrc.communication.smartwatch.manager
 
 import android.content.Context
 import com.getpebble.android.kit.PebbleKit
 import com.getpebble.android.kit.util.PebbleDictionary
 import com.mj.scorecounterrc.Constants
 import com.mj.scorecounterrc.data.model.Score
-import com.mj.scorecounterrc.smartwatch.MsgTypeFromSmartwatch
-import com.mj.scorecounterrc.smartwatch.listener.SmartwatchListener
+import com.mj.scorecounterrc.communication.smartwatch.MsgTypeFromSmartwatch
+import com.mj.scorecounterrc.communication.smartwatch.listener.SmartwatchListener
 import timber.log.Timber
 import java.lang.ref.WeakReference
 import java.util.UUID

@@ -1,4 +1,4 @@
-package com.mj.scorecounterrc.smartwatch.listener
+package com.mj.scorecounterrc.communication.smartwatch.listener
 
 import com.getpebble.android.kit.util.PebbleDictionary
 import com.mj.scorecounterrc.broadcastreceiver.SCPebbleDataReceiver

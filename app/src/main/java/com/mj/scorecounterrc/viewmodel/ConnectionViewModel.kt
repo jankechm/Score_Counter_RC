@@ -7,12 +7,12 @@ import android.os.Looper
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mj.scorecounterrc.Constants
-import com.mj.scorecounterrc.scorecounter.BLEScanner
-import com.mj.scorecounterrc.scorecounter.BLEScanner.BluetoothState
+import com.mj.scorecounterrc.communication.scorecounter.BLEScanner
+import com.mj.scorecounterrc.communication.scorecounter.BLEScanner.BluetoothState
 import com.mj.scorecounterrc.ble.ConnectionManager
 import com.mj.scorecounterrc.data.model.DeviceCard
 import com.mj.scorecounterrc.listener.ConnectionEventListener
-import com.mj.scorecounterrc.scorecounter.ScoreCounterConnectionManager
+import com.mj.scorecounterrc.communication.scorecounter.ScoreCounterConnectionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

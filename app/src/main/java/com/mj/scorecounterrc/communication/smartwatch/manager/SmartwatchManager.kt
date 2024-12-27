@@ -1,4 +1,4 @@
-package com.mj.scorecounterrc.smartwatch.manager
+package com.mj.scorecounterrc.communication.smartwatch.manager
 
 import android.app.Application.RECEIVER_EXPORTED
 import android.content.Context
@@ -8,8 +8,8 @@ import com.getpebble.android.kit.PebbleKit
 import com.mj.scorecounterrc.ScoreSyncImpl
 import com.mj.scorecounterrc.broadcastreceiver.SCPebbleDataReceiver
 import com.mj.scorecounterrc.data.model.Score
-import com.mj.scorecounterrc.smartwatch.listener.PebbleListener
-import com.mj.scorecounterrc.smartwatch.listener.SmartwatchListener
+import com.mj.scorecounterrc.communication.smartwatch.listener.PebbleListener
+import com.mj.scorecounterrc.communication.smartwatch.listener.SmartwatchListener
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton

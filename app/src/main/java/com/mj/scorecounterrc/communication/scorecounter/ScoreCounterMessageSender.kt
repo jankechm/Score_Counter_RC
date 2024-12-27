@@ -1,4 +1,4 @@
-package com.mj.scorecounterrc.scorecounter
+package com.mj.scorecounterrc.communication.scorecounter
 
 import com.mj.scorecounterrc.data.model.Score
 

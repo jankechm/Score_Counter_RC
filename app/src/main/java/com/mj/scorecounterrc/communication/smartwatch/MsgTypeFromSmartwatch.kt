@@ -1,4 +1,4 @@
-package com.mj.scorecounterrc.smartwatch
+package com.mj.scorecounterrc.communication.smartwatch
 
 enum class MsgTypeFromSmartwatch {
     SET_SCORE,
