@@ -112,6 +112,10 @@ class ConnectionViewModel @Inject constructor(
         _isScanning.update { false }
     }
 
+    private fun resetBleDeviceCards() {
+        bleScanner.resetScanResults()
+    }
+
     fun onEvent(event: ConnectionViewModelEvent) {
         when (event) {
             ConnectionViewModelEvent.SettingsButtonClicked -> {
@@ -127,6 +131,10 @@ class ConnectionViewModel @Inject constructor(
             ConnectionViewModelEvent.StopScan -> stopScan()
             ConnectionViewModelEvent.ResetBluetoothEnableRequest ->
                 _bluetoothEnableRequest.value = false
+            ConnectionViewModelEvent.CloseConnectionDialog -> {
+                resetBleDeviceCards()
+                stopScan()
+            }
         }
     }
 
@@ -137,6 +145,7 @@ class ConnectionViewModel @Inject constructor(
         data class Connect(val device: BluetoothDevice) : ConnectionViewModelEvent
         data object Disconnect : ConnectionViewModelEvent
         data object ResetBluetoothEnableRequest : ConnectionViewModelEvent
+        data object CloseConnectionDialog : ConnectionViewModelEvent
     }
 
     enum class ConnectionState {

@@ -143,4 +143,8 @@ class BLEScanner @Inject constructor(@ApplicationContext private val context: Co
             _bleScanResults.value = updatedList
         }
     }
+
+    fun resetScanResults() {
+        _bleScanResults.value = emptyList()
+    }
 }

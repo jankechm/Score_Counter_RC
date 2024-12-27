@@ -207,7 +207,10 @@ fun ScRcTopAppBar(
         // = Bluetooth is already enabled.
         if (!bluetoothEnableRequest.value) {
             ConnectionDialog(
-                onDismiss = { showConnectionDialog = false },
+                onDismiss = {
+                    showConnectionDialog = false
+                    onConnectionViewModelEvent(ConnectionViewModelEvent.CloseConnectionDialog)
+                },
                 onEvent = onConnectionViewModelEvent,
                 connectionState = connectionState,
                 isScanning = isScanning,
@@ -305,7 +308,11 @@ fun ConnectionDialog(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Button(
                 onClick = {
-                    onEvent(ConnectionViewModelEvent.StartScan)
+                    if (isScanning.value) {
+                        onEvent(ConnectionViewModelEvent.StopScan)
+                    } else {
+                        onEvent(ConnectionViewModelEvent.StartScan)
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = ScanButtonContainerClr,
