@@ -5,17 +5,23 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import com.mj.scorecounterrc.communication.scorecounter.ScoreCounterConnectionManager
 import com.mj.scorecounterrc.composable.MainScreenRoot
+import com.mj.scorecounterrc.data.manager.AppCfgManager
 import com.mj.scorecounterrc.ui.theme.ScoreCounterRCTheme
 import com.mj.scorecounterrc.util.BluetoothRequest
 import com.mj.scorecounterrc.viewmodel.EnableRequestSharedViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val enableRequestSharedViewModel: EnableRequestSharedViewModel by viewModels()
+
+    @Inject
+    lateinit var scoreCounterConnectionManager: ScoreCounterConnectionManager
 
     private val enableBluetoothLauncher = registerForActivityResult(
         BluetoothRequest.EnableBluetoothContract()
@@ -42,6 +48,13 @@ class MainActivity : ComponentActivity() {
             ScoreCounterRCTheme {
                 MainScreenRoot()
             }
+        }
+
+        if (AppCfgManager.appCfg.autoConnectOnStart &&
+                !scoreCounterConnectionManager.manuallyDisconnected &&
+                !scoreCounterConnectionManager.isBleScoreCounterConnected()) {
+            Timber.i("Connecting to persisted device...")
+            scoreCounterConnectionManager.startConnectionToPersistedDeviceCoroutine()
         }
     }
 }
