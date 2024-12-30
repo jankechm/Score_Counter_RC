@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import com.mj.scorecounterrc.ScoreSync
 import com.mj.scorecounterrc.communication.scorecounter.ScoreCounterConnectionManager
 import com.mj.scorecounterrc.composable.MainScreenRoot
 import com.mj.scorecounterrc.data.manager.AppCfgManager
@@ -22,6 +23,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var scoreCounterConnectionManager: ScoreCounterConnectionManager
+
+    @Inject
+    lateinit var scoreSync: ScoreSync
 
     private val enableBluetoothLauncher = registerForActivityResult(
         BluetoothRequest.EnableBluetoothContract()
@@ -56,6 +60,8 @@ class MainActivity : ComponentActivity() {
             Timber.i("Connecting to persisted device...")
             scoreCounterConnectionManager.startConnectionToPersistedDeviceCoroutine()
         }
+
+        scoreSync.trySync()
     }
 }
 
