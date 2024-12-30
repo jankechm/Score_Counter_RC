@@ -1,6 +1,7 @@
 package com.mj.scorecounterrc.composable
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -59,6 +60,7 @@ fun MainScreenRoot() {
 fun MainScreen(isScFacingDown: State<Boolean>, scoreCounterState: State<ScoreCounterState>,
                onEvent: (event: ScoreCounterEvent) -> Unit) {
     var areSpecialButtonsVisible by remember { mutableStateOf(false) }
+    var showCloseAppDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -188,6 +190,14 @@ fun MainScreen(isScFacingDown: State<Boolean>, scoreCounterState: State<ScoreCou
                     Spacer(modifier = Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.size(20.dp))
+            }
+
+            BackHandler {
+                showCloseAppDialog = true
+            }
+
+            if (showCloseAppDialog) {
+                CloseAppDialog(onDismiss = { showCloseAppDialog = false })
             }
         }
     )
