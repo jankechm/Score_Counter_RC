@@ -103,4 +103,8 @@ class PebbleManager @Inject constructor() {
     fun startPebbleApp(context: Context) {
         PebbleKit.startAppOnPebble(context, pebbleAppUUID)
     }
+
+    fun stopPebbleApp(context: Context) {
+        PebbleKit.closeAppOnPebble(context, pebbleAppUUID)
+    }
 }

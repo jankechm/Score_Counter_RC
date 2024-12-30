@@ -197,7 +197,7 @@ fun MainScreen(isScFacingDown: State<Boolean>, scoreCounterState: State<ScoreCou
             }
 
             if (showCloseAppDialog) {
-                CloseAppDialog(onDismiss = { showCloseAppDialog = false })
+                CloseAppDialogRoot(onDismiss = { showCloseAppDialog = false })
             }
         }
     )

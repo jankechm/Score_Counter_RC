@@ -35,16 +35,14 @@ class SmartwatchManager @Inject constructor(
     }
 
     private fun registerReceivers() {
-        context.let { app ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                app.registerReceiver(
-                    scPebbleDataReceiver,
-                    IntentFilter(com.getpebble.android.kit.Constants.INTENT_APP_RECEIVE),
-                    RECEIVER_EXPORTED
-                )
-            } else {
-                PebbleKit.registerReceivedDataHandler(app, scPebbleDataReceiver)
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(
+                scPebbleDataReceiver,
+                IntentFilter(com.getpebble.android.kit.Constants.INTENT_APP_RECEIVE),
+                RECEIVER_EXPORTED
+            )
+        } else {
+            PebbleKit.registerReceivedDataHandler(context, scPebbleDataReceiver)
         }
     }
 
@@ -63,20 +61,18 @@ class SmartwatchManager @Inject constructor(
     }
 
     fun sendScoreToSmartwatch(score: Score, timestamp: Long) {
-        context.let { app ->
-            pebbleManager.sendScoreToPebble(score, timestamp, app)
-        }
+        pebbleManager.sendScoreToPebble(score, timestamp, context)
     }
 
     fun sendSyncRequestToSmartwatch() {
-        context.let { app ->
-            pebbleManager.sendSyncRequestToPebble(app)
-        }
+        pebbleManager.sendSyncRequestToPebble(context)
     }
 
     private fun startSmartwatchApp() {
-        context.let { app ->
-            pebbleManager.startPebbleApp(app)
-        }
+        pebbleManager.startPebbleApp(context)
+    }
+
+    fun stopPebbleApp() {
+        pebbleManager.stopPebbleApp(context)
     }
 }
