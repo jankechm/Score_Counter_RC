@@ -65,6 +65,8 @@ fun ConnectionDialog(
             .width(320.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Spacer(modifier = Modifier.size(20.dp))
+
             Button(
                 onClick = {
                     if (isScanning.value) {
@@ -132,14 +134,15 @@ fun ConnectionDialog(
             Box(
                 modifier = Modifier
                     .size(290.dp, 260.dp)
-                    .border(border = BorderStroke(2.dp, Color.Black)),
+                    .border(border = BorderStroke(2.dp, Color.Black))
+                    .padding(10.dp),
                 contentAlignment = Alignment.TopCenter,
             ) {
                 LazyColumn(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .verticalScroll(rememberScrollState())
-                        .height(200.dp)
+                        .height(260.dp)
                 ) {
                     itemsIndexed(bleDeviceCards.value) { index, bleDeviceCard ->
                         var bgColor = ScScanResultContainerClr
@@ -151,8 +154,6 @@ fun ConnectionDialog(
                             bgColor = Color.Black
                             textColor = Color.White
                         }
-
-                        Spacer(modifier = Modifier.size(10.dp))
 
                         Card(
                             modifier = Modifier
@@ -188,6 +189,8 @@ fun ConnectionDialog(
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.size(10.dp))
                     }
                 }
             }

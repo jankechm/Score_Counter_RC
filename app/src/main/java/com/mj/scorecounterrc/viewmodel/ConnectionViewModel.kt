@@ -123,12 +123,13 @@ class ConnectionViewModel @Inject constructor(
             }
             is ConnectionViewModelEvent.Connect -> {
                 scoreCounterConnectionManager.connect(event.device)
+                resetBleDeviceCards()
                 stopScan()
-
             }
             ConnectionViewModelEvent.Disconnect -> {
                 scoreCounterConnectionManager.manuallyDisconnected = true
                 scoreCounterConnectionManager.disconnect()
+                resetBleDeviceCards()
             }
             ConnectionViewModelEvent.StartScan -> startScan()
             ConnectionViewModelEvent.StopScan -> stopScan()
