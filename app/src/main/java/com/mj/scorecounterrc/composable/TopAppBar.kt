@@ -43,6 +43,9 @@ import com.mj.scorecounterrc.viewmodel.ConnectionViewModel.ConnectionState
 import com.mj.scorecounterrc.viewmodel.EnableRequestSharedViewModel
 import com.mj.scorecounterrc.viewmodel.EnableRequestSharedViewModel.EnableRequestedEvent
 import android.content.Intent
+import androidx.compose.ui.graphics.Color
+import com.mj.scorecounterrc.ui.theme.BluetoothConnectedIconClr
+import com.mj.scorecounterrc.ui.theme.BluetoothManuallyDisconnectedIconClr
 
 
 @Composable
@@ -128,10 +131,22 @@ fun ScRcTopAppBar(
     TopAppBar(
         title = { Text(text = "Score Counter RC") },
         actions = {
-            val bluetoothIconResourceId = when(connectionState.value) {
-                ConnectionState.CONNECTED -> R.drawable.bluetooth_connected
-                ConnectionState.NOT_CONNECTED -> R.drawable.bluetooth
-                ConnectionState.MANUALLY_DISCONNECTED -> R.drawable.bluetooth_disabled
+            val bluetoothIconResourceId: Int
+            val bluetoothIconColor: Color
+
+            when (connectionState.value) {
+                ConnectionState.CONNECTED -> {
+                    bluetoothIconResourceId = R.drawable.bluetooth_connected
+                    bluetoothIconColor = BluetoothConnectedIconClr
+                }
+                ConnectionState.NOT_CONNECTED -> {
+                    bluetoothIconResourceId = R.drawable.bluetooth
+                    bluetoothIconColor = Color.Black
+                }
+                ConnectionState.MANUALLY_DISCONNECTED -> {
+                    bluetoothIconResourceId = R.drawable.bluetooth_disabled
+                    bluetoothIconColor = BluetoothManuallyDisconnectedIconClr
+                }
             }
 
             IconButton(
@@ -147,7 +162,8 @@ fun ScRcTopAppBar(
                 }) {
                     Icon(
                         painter = painterResource(id = bluetoothIconResourceId),
-                        contentDescription = "Connection"
+                        contentDescription = "Connection",
+                        tint = bluetoothIconColor
                     )
             }
             IconButton(onClick = { /*TODO*/ }) {

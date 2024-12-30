@@ -86,11 +86,13 @@ fun ConnectionDialog(
             Row {
                 Button(
                     modifier = Modifier.alpha(
-                        if (connectionState.value == ConnectionViewModel.ConnectionState.CONNECTED) 1f else 0f
+                        if (connectionState.value == ConnectionViewModel.ConnectionState.CONNECTED)
+                            1f else 0f
                     ),
                     onClick = {
                         if (connectionState.value == ConnectionViewModel.ConnectionState.CONNECTED) {
                             onEvent(ConnectionViewModel.ConnectionViewModelEvent.Disconnect)
+                            onDismiss()
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -113,6 +115,7 @@ fun ConnectionDialog(
                                     selectedBleDevice!!
                                 )
                             )
+                            onDismiss()
                         }
                     },
                     colors = ButtonDefaults.buttonColors(

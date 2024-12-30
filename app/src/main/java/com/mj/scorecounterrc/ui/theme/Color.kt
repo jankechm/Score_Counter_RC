@@ -28,3 +28,6 @@ val DisconnectButtonContainerClr = Color(0xFFCC0000)
 val ConnectButtonContainerClr = Color(0xFF669900)
 
 val ScScanResultContainerClr = Color(0xFFD1E5F4)
+
+val BluetoothConnectedIconClr = Color(0xFF1565C0)
+val BluetoothManuallyDisconnectedIconClr = Color(0xFFC62828)

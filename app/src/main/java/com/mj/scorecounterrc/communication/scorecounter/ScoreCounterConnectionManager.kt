@@ -351,6 +351,10 @@ class ScoreCounterConnectionManager @Inject constructor(
         sendSyncRequestToScoreCounter()
     }
 
+    fun connect(device: BluetoothDevice) {
+        ConnectionManager.connect(device, context)
+    }
+
     fun disconnect() {
         ConnectionManager.disconnectAllDevices()
     }

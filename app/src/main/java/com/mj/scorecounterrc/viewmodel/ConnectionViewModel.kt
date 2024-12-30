@@ -121,8 +121,11 @@ class ConnectionViewModel @Inject constructor(
             ConnectionViewModelEvent.SettingsButtonClicked -> {
                 TODO()
             }
+            is ConnectionViewModelEvent.Connect -> {
+                scoreCounterConnectionManager.connect(event.device)
+                stopScan()
 
-            is ConnectionViewModelEvent.Connect -> TODO()
+            }
             ConnectionViewModelEvent.Disconnect -> {
                 scoreCounterConnectionManager.manuallyDisconnected = true
                 scoreCounterConnectionManager.disconnect()
