@@ -31,7 +31,6 @@ class SmartwatchManager @Inject constructor(
     init {
         registerListeners()
         registerReceivers()
-        startSmartwatchApp()
     }
 
     private fun registerReceivers() {
@@ -68,11 +67,11 @@ class SmartwatchManager @Inject constructor(
         pebbleManager.sendSyncRequestToPebble(context)
     }
 
-    private fun startSmartwatchApp() {
+    fun startSmartwatchApp() {
         pebbleManager.startPebbleApp(context)
     }
 
-    fun stopPebbleApp() {
+    fun stopSmartwatchApp() {
         pebbleManager.stopPebbleApp(context)
     }
 }

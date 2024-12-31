@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.mj.scorecounterrc.ScoreSync
 import com.mj.scorecounterrc.communication.scorecounter.ScoreCounterConnectionManager
+import com.mj.scorecounterrc.communication.smartwatch.manager.SmartwatchManager
 import com.mj.scorecounterrc.composable.MainScreenRoot
 import com.mj.scorecounterrc.data.manager.AppCfgManager
 import com.mj.scorecounterrc.ui.theme.ScoreCounterRCTheme
@@ -23,9 +24,11 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var scoreCounterConnectionManager: ScoreCounterConnectionManager
-
     @Inject
     lateinit var scoreSync: ScoreSync
+    @Inject
+    lateinit var smartwatchManager: SmartwatchManager
+
 
     private val enableBluetoothLauncher = registerForActivityResult(
         BluetoothRequest.EnableBluetoothContract()
@@ -40,13 +43,12 @@ class MainActivity : ComponentActivity() {
     }
 
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
         enableRequestSharedViewModel.requestEnableBluetoothCallback = {
             enableBluetoothLauncher.launch(Unit)
         }
-
-        super.onCreate(savedInstanceState)
 
         setContent {
             ScoreCounterRCTheme {
@@ -54,12 +56,22 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        if (savedInstanceState == null) {
+            performInitialSetup()
+        }
+    }
+
+    private fun performInitialSetup() {
+        scoreCounterConnectionManager.manuallyDisconnected = false
+
         if (AppCfgManager.appCfg.autoConnectOnStart &&
-                !scoreCounterConnectionManager.manuallyDisconnected &&
-                !scoreCounterConnectionManager.isBleScoreCounterConnected()) {
+//            !scoreCounterConnectionManager.manuallyDisconnected &&
+            !scoreCounterConnectionManager.isBleScoreCounterConnected()) {
             Timber.i("Connecting to persisted device...")
             scoreCounterConnectionManager.startConnectionToPersistedDeviceCoroutine()
         }
+
+        smartwatchManager.startSmartwatchApp()
 
         scoreSync.trySync()
     }

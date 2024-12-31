@@ -36,12 +36,13 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 
 @Singleton
 class ScoreCounterConnectionManager @Inject constructor(
     @ApplicationContext private var context: Context,
-    private val scoreSync: ScoreSync,
+    private val scoreSync: Provider<ScoreSync>,
     private val storageManager: StorageManager
 ) : ScoreCounterMessageSender {
 
@@ -95,7 +96,7 @@ class ScoreCounterConnectionManager @Inject constructor(
                 shouldTryConnect = false
 
                 // Trigger new sync
-                scoreSync.trySync()
+                scoreSync.get().trySync()
             }
             onNotificationsEnabled = { _,_ -> Timber.i( "Enabled notification") }
             onDisconnect = { bleDevice ->
@@ -137,7 +138,7 @@ class ScoreCounterConnectionManager @Inject constructor(
                                     val score2 = scoreLst[1].toInt()
                                     val timestamp = scoreAndTimestampLst[1].toLong()
 
-                                    scoreSync.setScoreCounterData(Score(score1, score2), timestamp)
+                                    scoreSync.get().setScoreCounterData(Score(score1, score2), timestamp)
                                 } catch (ex: NumberFormatException) {
                                     Timber.e("Problem parsing " +
                                             Constants.SCORE_CMD_PREFIX + " command.", ex)
@@ -356,6 +357,7 @@ class ScoreCounterConnectionManager @Inject constructor(
     }
 
     fun disconnect() {
+        manuallyDisconnected = true
         ConnectionManager.disconnectAllDevices()
     }
 }

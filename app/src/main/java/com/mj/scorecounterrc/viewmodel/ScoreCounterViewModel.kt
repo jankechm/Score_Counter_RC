@@ -26,13 +26,13 @@ class ScoreCounterViewModel @Inject constructor(
     private val storageManager: StorageManager
 ): ViewModel() {
 
-    private val _isScFacingToTheReferee = MutableStateFlow(false)
-    val isScFacingToTheReferee: StateFlow<Boolean> = _isScFacingToTheReferee.asStateFlow()
+    private val _isScOppositeToTheReferee = MutableStateFlow(false)
+    val isScOppositeToTheReferee: StateFlow<Boolean> = _isScOppositeToTheReferee.asStateFlow()
 
     /**
      * Previous BLE display orientation value
      */
-    private var wasFacingToTheReferee = _isScFacingToTheReferee.value
+    private var wasScOppositeToTheReferee = _isScOppositeToTheReferee.value
 
     private val _scoreCounterState = MutableStateFlow(ScoreCounterState.IDLE)
     val scoreCounterState: StateFlow<ScoreCounterState> = _scoreCounterState.asStateFlow()
@@ -63,7 +63,7 @@ class ScoreCounterViewModel @Inject constructor(
                 if (it.left <= Constants.MAX_SCORE && it.right <= Constants.MAX_SCORE) {
                     // Determining which score is left and which is right to the phone's
                     // perspective.
-                    if (isScFacingToTheReferee.value) {
+                    if (isScOppositeToTheReferee.value) {
                         ScoreManager.setScore(it.left, it.right)
                     } else {
                         ScoreManager.setScore(it.right, it.left)
@@ -71,7 +71,7 @@ class ScoreCounterViewModel @Inject constructor(
                     ScoreManager.confirmNewScore(false)
 
                     val localScore = ScoreManager.localScore.value
-                    persistScore(localScore.left, localScore.right, isScFacingToTheReferee.value,
+                    persistScore(localScore.left, localScore.right, isScOppositeToTheReferee.value,
                         ScoreManager.timestamp)
                 }
             }
@@ -81,7 +81,7 @@ class ScoreCounterViewModel @Inject constructor(
     fun onEvent(event: ScoreCounterEvent) {
         when (event) {
             ScoreCounterEvent.ToggleOrientation -> {
-                _isScFacingToTheReferee.update { !it }
+                _isScOppositeToTheReferee.update { !it }
                 _scoreCounterState.update { ScoreCounterState.SCORE_CHANGED }
             }
             ScoreCounterEvent.SwapScore -> {
@@ -110,7 +110,7 @@ class ScoreCounterViewModel @Inject constructor(
             }
             ScoreCounterEvent.CancelButtonClicked -> {
                 ScoreManager.revertScore()
-                _isScFacingToTheReferee.update { wasFacingToTheReferee }
+                _isScOppositeToTheReferee.update { wasScOppositeToTheReferee }
                 _scoreCounterState.update { ScoreCounterState.IDLE }
 
             }
@@ -119,7 +119,7 @@ class ScoreCounterViewModel @Inject constructor(
                 var score1 = score.left
                 var score2 = score.right
 
-                if (!_isScFacingToTheReferee.value) {
+                if (!_isScOppositeToTheReferee.value) {
                     score1 = score.right
                     score2 = score.left
                 }
@@ -142,20 +142,20 @@ class ScoreCounterViewModel @Inject constructor(
                 }
 
                 // Confirm also SC orientation
-                wasFacingToTheReferee = _isScFacingToTheReferee.value
+                wasScOppositeToTheReferee = _isScOppositeToTheReferee.value
 
                 persistScore(
-                    score.left, score.right, _isScFacingToTheReferee.value, ScoreManager.timestamp
+                    score.left, score.right, _isScOppositeToTheReferee.value, ScoreManager.timestamp
                 )
             }
         }
     }
 
-    private fun persistScore(score1: Int, score2: Int, isFacingToTheReferee: Boolean,
+    private fun persistScore(score1: Int, score2: Int, isScOppositeToTheReferee: Boolean,
                              timestamp: Long) {
         storageManager.saveScore1(score1)
         storageManager.saveScore2(score2)
-        storageManager.saveSCOrientation(isFacingToTheReferee)
+        storageManager.saveSCOrientation(isScOppositeToTheReferee)
         storageManager.saveTimestamp(timestamp)
     }
 
@@ -168,7 +168,7 @@ class ScoreCounterViewModel @Inject constructor(
         ScoreManager.setScore(score1, score2)
         ScoreManager.timestamp = timestamp
         ScoreManager.confirmNewScore(false)
-        _isScFacingToTheReferee.update { isFacingToTheReferee }
+        _isScOppositeToTheReferee.update { isFacingToTheReferee }
     }
 }
 

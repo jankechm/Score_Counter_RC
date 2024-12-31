@@ -69,7 +69,6 @@ class ConnectionViewModel @Inject constructor(
                     ConnectionState.MANUALLY_DISCONNECTED else ConnectionState.NOT_CONNECTED }
         }
         onMtuChanged = { _,_ ->
-            scoreCounterConnectionManager.manuallyDisconnected = false
             _connectionState.update { ConnectionState.CONNECTED }
         }
     }
@@ -127,7 +126,6 @@ class ConnectionViewModel @Inject constructor(
                 stopScan()
             }
             ConnectionViewModelEvent.Disconnect -> {
-                scoreCounterConnectionManager.manuallyDisconnected = true
                 scoreCounterConnectionManager.disconnect()
                 resetBleDeviceCards()
             }

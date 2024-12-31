@@ -49,7 +49,7 @@ fun MainScreenPreview() {
 @Composable
 fun MainScreenRoot() {
     val scoreCounterViewModel = hiltViewModel<ScoreCounterViewModel>()
-    val isScFacingDown = scoreCounterViewModel.isScFacingToTheReferee.collectAsState()
+    val isScFacingDown = scoreCounterViewModel.isScOppositeToTheReferee.collectAsState()
     val scoreCounterState = scoreCounterViewModel.scoreCounterState.collectAsStateWithLifecycle()
     val onEvent = scoreCounterViewModel::onEvent
 
