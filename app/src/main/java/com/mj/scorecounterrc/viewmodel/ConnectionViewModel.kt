@@ -39,8 +39,8 @@ class ConnectionViewModel @Inject constructor(
     private val _isScanning = MutableStateFlow(false)
     val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
 
-    private val _bluetoothEnableRequest = MutableStateFlow(false)
-    val bluetoothEnableRequest: StateFlow<Boolean> = _bluetoothEnableRequest.asStateFlow()
+    private val _isBluetoothOff = MutableStateFlow(false)
+    val isBluetoothOff: StateFlow<Boolean> = _isBluetoothOff.asStateFlow()
 
     private val handler: Handler = Handler(Looper.getMainLooper())
 
@@ -82,10 +82,11 @@ class ConnectionViewModel @Inject constructor(
                 when (state) {
                     BluetoothState.Off -> {
                         // Notify the UI to request Bluetooth enable
-                        _bluetoothEnableRequest.value = true
+                        _isBluetoothOff.value = true
                     }
-                    // ... handle other states
-                    BluetoothState.On -> _bluetoothEnableRequest.value = false
+                    BluetoothState.On -> {
+                        _isBluetoothOff.value = false
+                    }
                 }
             }
         }
@@ -131,8 +132,6 @@ class ConnectionViewModel @Inject constructor(
             }
             ConnectionViewModelEvent.StartScan -> startScan()
             ConnectionViewModelEvent.StopScan -> stopScan()
-            ConnectionViewModelEvent.ResetBluetoothEnableRequest ->
-                _bluetoothEnableRequest.value = false
             ConnectionViewModelEvent.CloseConnectionDialog -> {
                 resetBleDeviceCards()
                 stopScan()
@@ -146,7 +145,6 @@ class ConnectionViewModel @Inject constructor(
         data object StopScan : ConnectionViewModelEvent
         data class Connect(val device: BluetoothDevice) : ConnectionViewModelEvent
         data object Disconnect : ConnectionViewModelEvent
-        data object ResetBluetoothEnableRequest : ConnectionViewModelEvent
         data object CloseConnectionDialog : ConnectionViewModelEvent
     }
 

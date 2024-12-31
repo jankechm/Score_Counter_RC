@@ -57,7 +57,7 @@ fun ScRcTopAppBarRoot() {
     val connectionState = connectionViewModel.connectionState.collectAsStateWithLifecycle()
     val isScanning = connectionViewModel.isScanning.collectAsStateWithLifecycle()
     val bleDeviceCards = connectionViewModel.bleDeviceCards.collectAsStateWithLifecycle()
-    val bluetoothEnableRequest = connectionViewModel.bluetoothEnableRequest
+    val isBluetoothOff = connectionViewModel.isBluetoothOff
         .collectAsStateWithLifecycle()
     val onEnableRequestEvent = enableRequestSharedViewModel::onEvent
 
@@ -67,7 +67,7 @@ fun ScRcTopAppBarRoot() {
         connectionState,
         isScanning,
         bleDeviceCards,
-        bluetoothEnableRequest
+        isBluetoothOff
     )
 }
 
@@ -79,7 +79,7 @@ fun ScRcTopAppBar(
     connectionState: State<ConnectionState>,
     isScanning: State<Boolean>,
     bleDeviceCards: State<List<DeviceCard>>,
-    bluetoothEnableRequest: State<Boolean>
+    isBluetoothOff: State<Boolean>
 ) {
     val btPermissions = arrayOf(
         Manifest.permission.BLUETOOTH_CONNECT,
@@ -93,6 +93,7 @@ fun ScRcTopAppBar(
     var showRequestBtPermissionsRationale by rememberSaveable { mutableStateOf(false) }
     var showRequestNotificationPermissionRationale by rememberSaveable { mutableStateOf(false) }
     var showBtAppSettingsDialog by rememberSaveable { mutableStateOf(false) }
+    var wasBluetoothTurnOnRequested by rememberSaveable { mutableStateOf(false) }
 
     val bluetoothPermissionResultLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -179,15 +180,15 @@ fun ScRcTopAppBar(
     )
 
     if (showConnectionDialog) {
-        if (bluetoothEnableRequest.value) {
+        if (isBluetoothOff.value) {
             LaunchedEffect(true) {
                 onEnableRequestEvent(EnableRequestedEvent.EnableBluetooth)
             }
+            wasBluetoothTurnOnRequested = true
         }
 
-        // Show the ConnectionDialog only if there's no request to enable Bluetooth
-        // = Bluetooth is already enabled.
-        if (!bluetoothEnableRequest.value) {
+        // Show the ConnectionDialog only if Bluetooth is already enabled.
+        if (!isBluetoothOff.value) {
             ConnectionDialog(
                 onDismiss = {
                     showConnectionDialog = false
@@ -248,6 +249,11 @@ fun ScRcTopAppBar(
                 notificationPermissionResultLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         )
+    }
+
+    if (wasBluetoothTurnOnRequested) {
+        wasBluetoothTurnOnRequested = false
+        showConnectionDialog = true
     }
 }
 

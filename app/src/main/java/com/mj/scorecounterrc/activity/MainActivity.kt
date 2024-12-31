@@ -65,7 +65,6 @@ class MainActivity : ComponentActivity() {
         scoreCounterConnectionManager.manuallyDisconnected = false
 
         if (AppCfgManager.appCfg.autoConnectOnStart &&
-//            !scoreCounterConnectionManager.manuallyDisconnected &&
             !scoreCounterConnectionManager.isBleScoreCounterConnected()) {
             Timber.i("Connecting to persisted device...")
             scoreCounterConnectionManager.startConnectionToPersistedDeviceCoroutine()
