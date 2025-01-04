@@ -41,30 +41,38 @@ import com.mj.scorecounterrc.viewmodel.ScoreCounterViewModel
 @Composable
 fun MainScreenPreview() {
     ScoreCounterRCTheme {
-        MainScreen(isScFacingDown = mutableStateOf(false),
-            mutableStateOf(ScoreCounterState.IDLE), onEvent = {})
+        MainScreen(
+            onNavigateToSettings = {},
+            isScFacingDown = mutableStateOf(false),
+            scoreCounterState = mutableStateOf(ScoreCounterState.IDLE),
+            onEvent = {}
+        )
     }
 }
 
 @Composable
-fun MainScreenRoot() {
+fun MainScreenRoot(onNavigateToSettings: () -> Unit) {
     val scoreCounterViewModel = hiltViewModel<ScoreCounterViewModel>()
     val isScFacingDown = scoreCounterViewModel.isScOppositeToTheReferee.collectAsState()
     val scoreCounterState = scoreCounterViewModel.scoreCounterState.collectAsStateWithLifecycle()
     val onEvent = scoreCounterViewModel::onEvent
 
-    MainScreen(isScFacingDown, scoreCounterState, onEvent)
+    MainScreen(onNavigateToSettings, isScFacingDown, scoreCounterState, onEvent)
 }
 
 @Composable
-fun MainScreen(isScFacingDown: State<Boolean>, scoreCounterState: State<ScoreCounterState>,
-               onEvent: (event: ScoreCounterEvent) -> Unit) {
+fun MainScreen(
+    onNavigateToSettings: (() -> Unit),
+    isScFacingDown: State<Boolean>,
+    scoreCounterState: State<ScoreCounterState>,
+    onEvent: (event: ScoreCounterEvent) -> Unit
+) {
     var areSpecialButtonsVisible by remember { mutableStateOf(false) }
     var showCloseAppDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            ScRcTopAppBarRoot()
+            ScRcTopAppBarRoot(CurrentScreen.Main, onNavigateToSettings = onNavigateToSettings)
         },
         content = { innerPadding ->
             Column(

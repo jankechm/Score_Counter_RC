@@ -19,9 +19,11 @@ import com.mj.scorecounterrc.ble.Connect
 import com.mj.scorecounterrc.ble.ConnectionManager
 import com.mj.scorecounterrc.ble.ConnectionManager.isConnected
 import com.mj.scorecounterrc.broadcastreceiver.BtStateChangedReceiver
+import com.mj.scorecounterrc.communication.scorecounter.listener.SCCMListener
 import com.mj.scorecounterrc.data.manager.AppCfgManager
 import com.mj.scorecounterrc.data.manager.StorageManager
 import com.mj.scorecounterrc.data.model.Score
+import com.mj.scorecounterrc.data.model.ScoreCounterCfg
 import com.mj.scorecounterrc.listener.BtBroadcastListener
 import com.mj.scorecounterrc.listener.ConnectionEventListener
 import com.mj.scorecounterrc.util.hasBtPermissions
@@ -31,9 +33,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import timber.log.Timber
+import java.lang.ref.WeakReference
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Provider
@@ -62,6 +69,8 @@ class ScoreCounterConnectionManager @Inject constructor(
 
     private val applicationScope = CoroutineScope(SupervisorJob())
 
+    private var listeners: MutableSet<WeakReference<SCCMListener>> = ConcurrentHashMap.newKeySet()
+
 
     enum class ReconnectionType {
         PERSISTED_DEVICE,
@@ -81,7 +90,7 @@ class ScoreCounterConnectionManager @Inject constructor(
 
                 writableDisplayChar?.let {
                     ConnectionManager.enableNotifications(btDevice, it)
-                    sendDayTimeToScoreCounter(btDevice, it)
+                    sendDayTimeToScoreCounter()
                 }
 
                 storageManager.saveDeviceAddress(btDevice.address)
@@ -142,6 +151,26 @@ class ScoreCounterConnectionManager @Inject constructor(
                                 } catch (ex: NumberFormatException) {
                                     Timber.e("Problem parsing " +
                                             Constants.SCORE_CMD_PREFIX + " command.", ex)
+                                }
+                            }
+                        }
+                    } else if (msg.startsWith(Constants.CONFIG_CMD_PREFIX)) {
+                        val jsonStr = msg.removePrefix(Constants.CONFIG_CMD_PREFIX)
+                        try {
+                            val scoreCounterCfg = Json.decodeFromString<ScoreCounterCfg>(jsonStr)
+                            listeners.forEach { it.get()?.onCfgReceived?.invoke(scoreCounterCfg) }
+                        } catch (ex: Exception) {
+                            when (ex) {
+                                is SerializationException,
+                                is IllegalArgumentException -> {
+                                    Timber.e("Problem decoding JSON from " +
+                                            Constants.CONFIG_CMD_PREFIX, ex
+                                    )
+                                }
+                                else -> {
+                                    Timber.e("Problem with " +
+                                            Constants.CONFIG_CMD_PREFIX, ex
+                                    )
                                 }
                             }
                         }
@@ -276,33 +305,17 @@ class ScoreCounterConnectionManager @Inject constructor(
         isSomeConnectionCoroutineRunning.set(false)
     }
 
-    private fun sendDayTimeToScoreCounter(btDevice: BluetoothDevice,
-                                          characteristic: BluetoothGattCharacteristic) {
-        val currDateTime = LocalDateTime.now()
-        val formatter = DateTimeFormatter.ofPattern("e d.M.yy H:m:s")
-
-        Timber.i(Constants.SET_TIME_CMD_PREFIX + currDateTime.format(formatter))
-        ConnectionManager.writeCharacteristic(
-            btDevice, characteristic,
-            (Constants.SET_TIME_CMD_PREFIX + currDateTime.format(formatter) +
-                    Constants.CRLF).
-            toByteArray(Charsets.US_ASCII)
-        )
-    }
-
-    fun sendScoreToScoreCounter(score: Score, timestamp: Long): Boolean {
+    private fun sendMsgToScoreCounter(message: String): Boolean {
         var isSent = false
 
         if (isBleScoreCounterConnected()) {
             if (writableDisplayChar != null) {
-                val updateScoreCmd = Constants.SET_SCORE_CMD_PREFIX +
-                        "${score.left}:${score.right}T$timestamp${Constants.CRLF}"
-
-                Timber.d("Sending BLE message: $updateScoreCmd")
+                Timber.d("Sending BLE message: $message")
 
                 ConnectionManager.writeCharacteristic(
-                    bleScoreCounter!!, writableDisplayChar!!,
-                    updateScoreCmd.toByteArray(Charsets.US_ASCII)
+                    bleScoreCounter!!,
+                    writableDisplayChar!!,
+                    message.toByteArray(Charsets.US_ASCII)
                 )
 
                 isSent = true
@@ -316,21 +329,63 @@ class ScoreCounterConnectionManager @Inject constructor(
         return isSent
     }
 
-    fun sendSyncRequestToScoreCounter() {
-        if (isBleScoreCounterConnected()) {
-            if (writableDisplayChar != null) {
-                val getScoreCmd = "${Constants.GET_SCORE_CMD}${Constants.CRLF}"
-                Timber.d("Sending BLE message: $getScoreCmd")
-                ConnectionManager.writeCharacteristic(
-                    bleScoreCounter!!, writableDisplayChar!!,
-                    getScoreCmd.toByteArray(Charsets.US_ASCII)
-                )
-            } else {
-                Timber.d("Display connected, but characteristic is null!")
-            }
-        } else {
-            Timber.d("Display not connected.")
-        }
+    private fun sendDayTimeToScoreCounter(): Boolean {
+        val currDateTime = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("e d.M.yy H:m:s")
+        val message = Constants.SET_TIME_CMD_PREFIX + currDateTime.format(formatter) +
+                Constants.CRLF
+
+        Timber.i(Constants.SET_TIME_CMD_PREFIX + currDateTime.format(formatter))
+
+        return sendMsgToScoreCounter(message)
+    }
+
+    fun sendScoreToScoreCounter(score: Score, timestamp: Long): Boolean {
+        val message = Constants.SET_SCORE_CMD_PREFIX +
+                "${score.left}:${score.right}T$timestamp${Constants.CRLF}"
+
+        return sendMsgToScoreCounter(message)
+    }
+
+    fun sendGetConfigRequest(): Boolean {
+        val message = "${Constants.GET_CONFIG_CMD}${Constants.CRLF}"
+        return sendMsgToScoreCounter(message)
+    }
+
+    fun sendSyncRequestToScoreCounter(): Boolean {
+        val message = "${Constants.GET_SCORE_CMD}${Constants.CRLF}"
+        return sendMsgToScoreCounter(message)
+    }
+
+    fun sendShowScoreSetting(showScore: Boolean): Boolean {
+        val showScoreVal = if (showScore) 1 else 0
+        val message = "${Constants.SET_SHOW_SCORE_CMD_PREFIX}$showScoreVal${Constants.CRLF}"
+        return sendMsgToScoreCounter(message)
+    }
+
+    fun sendShowTimeSetting(showTime: Boolean): Boolean {
+        val showTimeVal = if (showTime) 1 else 0
+        val message = "${Constants.SET_SHOW_TIME_CMD_PREFIX}$showTimeVal${Constants.CRLF}"
+        return sendMsgToScoreCounter(message)
+    }
+
+    fun sendScrollSetting(scroll: Boolean): Boolean {
+        val scrollVal = if (scroll) 1 else 0
+        val message = "${Constants.SET_SCROLL_CMD_PREFIX}$scrollVal${Constants.CRLF}"
+        return sendMsgToScoreCounter(message)
+    }
+
+    fun sendBrightnessSetting(brightness: Int): Boolean {
+        val message = "${Constants.SET_BRIGHTNESS_CMD_PREFIX}$brightness${Constants.CRLF}"
+        return sendMsgToScoreCounter(message)
+    }
+
+    fun sendPersistConfig(config: ScoreCounterCfg): Boolean {
+        val json = Json { encodeDefaults = true }
+        val jsonStr = json.encodeToString(config)
+
+        val message = "${Constants.PERSIST_CONFIG_CMD_PREFIX}$jsonStr${Constants.CRLF}"
+        return sendMsgToScoreCounter(message)
     }
 
     @SuppressLint("MissingPermission")
@@ -359,5 +414,23 @@ class ScoreCounterConnectionManager @Inject constructor(
     fun disconnect() {
         manuallyDisconnected = true
         ConnectionManager.disconnectAllDevices()
+    }
+
+    @Synchronized
+    fun registerListener(listener: SCCMListener) {
+        if (listeners.map { it.get() }.none { it?.equals(listener) == true }) {
+            listeners.add(WeakReference(listener))
+            listeners.removeIf { it.get() == null }
+
+            Timber.d("Added a Score Counter Connection Manager listener, " +
+                    "${listeners.size} listeners total")
+        }
+    }
+
+    @Synchronized
+    fun unregisterListener(listener: SCCMListener) {
+        listeners.removeIf { it.get() == listener || it.get() == null }
+        Timber.d("Removed a Score Counter Connection Manager listener, " +
+                "${listeners.size} listeners total")
     }
 }

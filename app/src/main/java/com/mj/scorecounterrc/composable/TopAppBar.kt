@@ -43,13 +43,18 @@ import com.mj.scorecounterrc.viewmodel.ConnectionViewModel.ConnectionState
 import com.mj.scorecounterrc.viewmodel.EnableRequestSharedViewModel
 import com.mj.scorecounterrc.viewmodel.EnableRequestSharedViewModel.EnableRequestedEvent
 import android.content.Intent
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.graphics.Color
 import com.mj.scorecounterrc.ui.theme.BluetoothConnectedIconClr
 import com.mj.scorecounterrc.ui.theme.BluetoothManuallyDisconnectedIconClr
 
 
 @Composable
-fun ScRcTopAppBarRoot() {
+fun ScRcTopAppBarRoot(
+    currScreen: CurrentScreen,
+    navigateBack: (() -> Unit)? = null,
+    onNavigateToSettings: (() -> Unit)? = null,
+) {
     val connectionViewModel = hiltViewModel<ConnectionViewModel>()
     val enableRequestSharedViewModel = hiltViewModel<EnableRequestSharedViewModel>()
 
@@ -62,6 +67,9 @@ fun ScRcTopAppBarRoot() {
     val onEnableRequestEvent = enableRequestSharedViewModel::onEvent
 
     ScRcTopAppBar(
+        currScreen,
+        navigateBack,
+        onNavigateToSettings,
         onConnectionViewModelEvent = onConnectionViewModelEvent,
         onEnableRequestEvent = onEnableRequestEvent,
         connectionState,
@@ -74,6 +82,9 @@ fun ScRcTopAppBarRoot() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScRcTopAppBar(
+    currScreen: CurrentScreen,
+    navigateBack: (() -> Unit)? = null,
+    onNavigateToSettings: (() -> Unit)? = null,
     onConnectionViewModelEvent: (ConnectionViewModelEvent) -> Unit,
     onEnableRequestEvent: (EnableRequestedEvent) -> Unit,
     connectionState: State<ConnectionState>,
@@ -131,6 +142,16 @@ fun ScRcTopAppBar(
 
     TopAppBar(
         title = { Text(text = "Score Counter RC") },
+        navigationIcon = {
+            if (currScreen != CurrentScreen.Main && navigateBack != null) {
+                IconButton(onClick = { navigateBack() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            }
+        },
         actions = {
             val bluetoothIconResourceId: Int
             val bluetoothIconColor: Color
@@ -167,11 +188,13 @@ fun ScRcTopAppBar(
                         tint = bluetoothIconColor
                     )
             }
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings"
-                )
+            if (currScreen != CurrentScreen.Settings && onNavigateToSettings != null) {
+                IconButton(onClick = { onNavigateToSettings() }) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings"
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -273,5 +296,9 @@ fun ConnectionDialogPreview() {
             ))
         )
     }
+}
+
+enum class CurrentScreen {
+    Main, Settings
 }
 

@@ -118,9 +118,6 @@ class ConnectionViewModel @Inject constructor(
 
     fun onEvent(event: ConnectionViewModelEvent) {
         when (event) {
-            ConnectionViewModelEvent.SettingsButtonClicked -> {
-                TODO()
-            }
             is ConnectionViewModelEvent.Connect -> {
                 scoreCounterConnectionManager.connect(event.device)
                 resetBleDeviceCards()
@@ -140,7 +137,6 @@ class ConnectionViewModel @Inject constructor(
     }
 
     sealed interface ConnectionViewModelEvent {
-        data object SettingsButtonClicked : ConnectionViewModelEvent
         data object StartScan : ConnectionViewModelEvent
         data object StopScan : ConnectionViewModelEvent
         data class Connect(val device: BluetoothDevice) : ConnectionViewModelEvent

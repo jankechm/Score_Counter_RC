@@ -5,15 +5,20 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.mj.scorecounterrc.ScoreSync
 import com.mj.scorecounterrc.communication.scorecounter.ScoreCounterConnectionManager
 import com.mj.scorecounterrc.communication.smartwatch.manager.SmartwatchManager
 import com.mj.scorecounterrc.composable.MainScreenRoot
+import com.mj.scorecounterrc.composable.SettingsScreenRoot
 import com.mj.scorecounterrc.data.manager.AppCfgManager
 import com.mj.scorecounterrc.ui.theme.ScoreCounterRCTheme
 import com.mj.scorecounterrc.util.BluetoothRequest
 import com.mj.scorecounterrc.viewmodel.EnableRequestSharedViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.serialization.Serializable
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -52,7 +57,23 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ScoreCounterRCTheme {
-                MainScreenRoot()
+                val navController = rememberNavController()
+                NavHost(navController, startDestination = Main) {
+                    composable<Main> {
+                        MainScreenRoot(
+                            onNavigateToSettings = {
+                                navController.navigate(Settings)
+                            }
+                        )
+                    }
+                    composable<Settings> {
+                        SettingsScreenRoot(
+                            navigateBack = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+                }
             }
         }
 
@@ -76,4 +97,8 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@Serializable
+object Main
+@Serializable
+object Settings
 

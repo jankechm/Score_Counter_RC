@@ -71,6 +71,7 @@ dependencies {
     implementation("com.github.bastienpaulfr:Treessence:1.1.2")
     implementation("com.getpebble:pebblekit:4.0.1")
     implementation("com.google.dagger:hilt-android:2.54")
+    implementation("androidx.navigation:navigation-compose:2.8.5")
     kapt("com.google.dagger:hilt-compiler:2.54")
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.google.dagger:hilt-android-testing:2.54")
