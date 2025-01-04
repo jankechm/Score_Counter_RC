@@ -10,7 +10,7 @@ data class ScoreCounterCfg(
     @SerialName("use_score")
     var useScore: Boolean = true,
     @SerialName("use_time")
-    var useTime: Boolean = true,
+    var useTime: Boolean = false,
     @SerialName("scroll")
     var scroll: Boolean = false
 )

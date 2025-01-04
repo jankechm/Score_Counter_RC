@@ -15,9 +15,11 @@ import com.mj.scorecounterrc.viewmodel.SettingsViewModel
 fun SettingsSwitch(
     onEvent: (event: SettingsViewModel.SettingsViewModelEvent) -> Unit,
     isChecked: MutableState<Boolean>,
-    switchType: SwitchType
+    switchType: SwitchType,
+    modifier: Modifier = Modifier,
 ) {
     Switch(
+        modifier = modifier,
         checked = isChecked.value,
         onCheckedChange = {
             isChecked.value = it
