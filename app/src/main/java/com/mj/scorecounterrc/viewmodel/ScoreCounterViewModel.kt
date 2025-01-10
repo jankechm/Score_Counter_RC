@@ -169,6 +169,7 @@ class ScoreCounterViewModel @Inject constructor(
         ScoreManager.timestamp = timestamp
         ScoreManager.confirmNewScore(false)
         _isScOppositeToTheReferee.update { isFacingToTheReferee }
+        wasScOppositeToTheReferee = isFacingToTheReferee
     }
 }
 
