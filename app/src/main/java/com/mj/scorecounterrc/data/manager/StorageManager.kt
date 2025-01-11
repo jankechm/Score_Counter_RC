@@ -16,7 +16,8 @@ class StorageManager @Inject constructor(
         const val PREF_SCORE_1 = "score1"
         const val PREF_SCORE_2 = "score2"
         const val PREF_TIMESTAMP = "timestamp"
-        const val PREF_SC_FACES_TO_REFEREE = "sc_faces_to_referee"
+        const val PREF_IS_SC_OPPOSITE_TO_THE_REFEREE = "sc_opposite_to_referee"
+        const val PREF_AUTO_CONNECT_ON_STARTUP = "auto_connect_on_startup"
     }
 
     fun saveDeviceAddress(deviceAddress: String) {
@@ -71,19 +72,32 @@ class StorageManager @Inject constructor(
         return prefs.getLong(PREF_TIMESTAMP, 0L)
     }
 
-    fun saveSCOrientation(scFacesToReferee: Boolean) {
+    fun saveScPosition(isScOppositeToTheReferee: Boolean) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().apply {
-            putBoolean(PREF_SC_FACES_TO_REFEREE, scFacesToReferee)
+            putBoolean(PREF_IS_SC_OPPOSITE_TO_THE_REFEREE, isScOppositeToTheReferee)
             apply()
         }
     }
 
     /**
-     * @return true if stored Score Counter orientation was: facing to the referee.
+     * @return true if stored Score Counter position was: opposite to the referee.
      */
-    fun getSCOrientation(): Boolean {
+    fun getScPosition(): Boolean {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getBoolean(PREF_SC_FACES_TO_REFEREE, false)
+        return prefs.getBoolean(PREF_IS_SC_OPPOSITE_TO_THE_REFEREE, false)
+    }
+
+    fun saveAutoConnectOnStartup(autoConnectOnStartup: Boolean) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().apply {
+            putBoolean(PREF_AUTO_CONNECT_ON_STARTUP, autoConnectOnStartup)
+            apply()
+        }
+    }
+
+    fun getAutoConnectOnStartup(): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(PREF_AUTO_CONNECT_ON_STARTUP, false)
     }
 }

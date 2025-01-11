@@ -51,6 +51,7 @@ import com.mj.scorecounterrc.ui.theme.BluetoothManuallyDisconnectedIconClr
 
 @Composable
 fun ScRcTopAppBarRoot(
+    title: String,
     currScreen: CurrentScreen,
     navigateBack: (() -> Unit)? = null,
     onNavigateToSettings: (() -> Unit)? = null,
@@ -67,6 +68,7 @@ fun ScRcTopAppBarRoot(
     val onEnableRequestEvent = enableRequestSharedViewModel::onEvent
 
     ScRcTopAppBar(
+        title,
         currScreen,
         navigateBack,
         onNavigateToSettings,
@@ -82,6 +84,7 @@ fun ScRcTopAppBarRoot(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScRcTopAppBar(
+    title: String,
     currScreen: CurrentScreen,
     navigateBack: (() -> Unit)? = null,
     onNavigateToSettings: (() -> Unit)? = null,
@@ -141,7 +144,7 @@ fun ScRcTopAppBar(
     )
 
     TopAppBar(
-        title = { Text(text = "Score Counter RC") },
+        title = { Text(text = title) },
         navigationIcon = {
             if (currScreen != CurrentScreen.Main && navigateBack != null) {
                 IconButton(onClick = { navigateBack() }) {

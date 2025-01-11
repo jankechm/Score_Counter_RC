@@ -33,6 +33,8 @@ class MainActivity : ComponentActivity() {
     lateinit var scoreSync: ScoreSync
     @Inject
     lateinit var smartwatchManager: SmartwatchManager
+    @Inject
+    lateinit var appCfgManager: AppCfgManager
 
 
     private val enableBluetoothLauncher = registerForActivityResult(
@@ -85,7 +87,9 @@ class MainActivity : ComponentActivity() {
     private fun performInitialSetup() {
         scoreCounterConnectionManager.manuallyDisconnected = false
 
-        if (AppCfgManager.appCfg.autoConnectOnStart &&
+        appCfgManager.loadPersistedAppCfg()
+
+        if (appCfgManager.appCfg.value.autoConnectOnStart &&
             !scoreCounterConnectionManager.isBleScoreCounterConnected()) {
             Timber.i("Connecting to persisted device...")
             scoreCounterConnectionManager.startConnectionToPersistedDeviceCoroutine()

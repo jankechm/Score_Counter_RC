@@ -72,7 +72,11 @@ fun MainScreen(
 
     Scaffold(
         topBar = {
-            ScRcTopAppBarRoot(CurrentScreen.Main, onNavigateToSettings = onNavigateToSettings)
+            ScRcTopAppBarRoot(
+                title = "Remote Control",
+                currScreen = CurrentScreen.Main,
+                onNavigateToSettings = onNavigateToSettings
+            )
         },
         content = { innerPadding ->
             Column(

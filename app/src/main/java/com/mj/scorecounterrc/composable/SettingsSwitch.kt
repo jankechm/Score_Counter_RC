@@ -9,13 +9,11 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
-import com.mj.scorecounterrc.viewmodel.SettingsViewModel
 
 @Composable
 fun SettingsSwitch(
-    onEvent: (event: SettingsViewModel.SettingsViewModelEvent) -> Unit,
+    onChange: (isChecked: Boolean) -> Unit,
     isChecked: MutableState<Boolean>,
-    switchType: SwitchType,
     enabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -25,19 +23,7 @@ fun SettingsSwitch(
         checked = isChecked.value,
         onCheckedChange = {
             isChecked.value = it
-            when (switchType) {
-                SwitchType.SHOW_SCORE -> onEvent(
-                    SettingsViewModel.SettingsViewModelEvent.ShowScoreChangedEvent(
-                        it
-                    )
-                )
-
-                SwitchType.SHOW_TIME -> onEvent(
-                    SettingsViewModel.SettingsViewModelEvent.ShowTimeChangedEvent(
-                        it
-                    )
-                )
-            }
+            onChange(it)
         },
         thumbContent = if (isChecked.value) {
             {
@@ -51,8 +37,4 @@ fun SettingsSwitch(
             null
         }
     )
-}
-
-enum class SwitchType {
-    SHOW_SCORE, SHOW_TIME
 }

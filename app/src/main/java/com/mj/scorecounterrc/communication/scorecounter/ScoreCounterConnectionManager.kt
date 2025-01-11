@@ -20,7 +20,6 @@ import com.mj.scorecounterrc.ble.ConnectionManager
 import com.mj.scorecounterrc.ble.ConnectionManager.isConnected
 import com.mj.scorecounterrc.broadcastreceiver.BtStateChangedReceiver
 import com.mj.scorecounterrc.communication.scorecounter.listener.SCCMListener
-import com.mj.scorecounterrc.data.manager.AppCfgManager
 import com.mj.scorecounterrc.data.manager.StorageManager
 import com.mj.scorecounterrc.data.model.Score
 import com.mj.scorecounterrc.data.model.ScoreCounterCfg
@@ -392,9 +391,7 @@ class ScoreCounterConnectionManager @Inject constructor(
 
     @SuppressLint("MissingPermission")
     fun handleBonding(btDevice: BluetoothDevice) {
-        if (AppCfgManager.appCfg.askToBond) {
-            btDevice.createBond()
-        }
+        btDevice.createBond()
     }
 
     fun isBleScoreCounterConnected(): Boolean {
