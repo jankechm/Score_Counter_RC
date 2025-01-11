@@ -41,9 +41,10 @@ import com.mj.scorecounterrc.viewmodel.SettingsViewModel.TextViewBehaviour
 fun SettingsScreenRoot(navigateBack: () -> Unit) {
     val settingsViewModel = hiltViewModel<SettingsViewModel>()
     val loadedSettings = settingsViewModel.loadedSettings.collectAsStateWithLifecycle()
+    val isPersistBtnEnabled = settingsViewModel.isPersistBtnEnabled.collectAsStateWithLifecycle()
     val onEvent = settingsViewModel::onEvent
 
-    SettingsScreen(navigateBack, loadedSettings, onEvent)
+    SettingsScreen(navigateBack, loadedSettings, isPersistBtnEnabled, onEvent)
 }
 
 @SuppressLint("UnrememberedMutableState")
@@ -53,6 +54,7 @@ fun SettingsScreenPreview() {
     SettingsScreen(
         onEvent = {},
         loadedSettings = mutableStateOf(ScoreCounterCfg()),
+        isPersistBtnEnabled = mutableStateOf(false),
         navigateBack = {}
     )
 }
@@ -61,6 +63,7 @@ fun SettingsScreenPreview() {
 fun SettingsScreen(
     navigateBack: () -> Unit,
     loadedSettings: State<ScoreCounterCfg>,
+    isPersistBtnEnabled: State<Boolean>,
     onEvent: (event: SettingsViewModelEvent) -> Unit
 ) {
     val minBrightness = 0f
@@ -179,6 +182,7 @@ fun SettingsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Button(
+                            enabled = isPersistBtnEnabled.value,
                             onClick = {
                                 val config = ScoreCounterCfg()
 

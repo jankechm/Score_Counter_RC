@@ -19,11 +19,15 @@ class SettingsViewModel @Inject constructor(
         MutableStateFlow(ScoreCounterCfg())
     val loadedSettings: StateFlow<ScoreCounterCfg> = _loadedSettings.asStateFlow()
 
+    private val _isPersistBtnEnabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isPersistBtnEnabled: StateFlow<Boolean> = _isPersistBtnEnabled.asStateFlow()
+
     private val sccmListener by lazy {
         SCCMListener().apply {
             onCfgReceived = { cfg ->
                 _loadedSettings.value = cfg
             }
+            onSentCfgAck = { _isPersistBtnEnabled.value = false }
         }
     }
 
@@ -53,15 +57,19 @@ class SettingsViewModel @Inject constructor(
             }
             is SettingsViewModelEvent.BrightnessChangedEvent -> {
                 sccm.sendBrightnessSetting(event.level.toInt())
+                _isPersistBtnEnabled.value = true
             }
             is SettingsViewModelEvent.ShowScoreChangedEvent -> {
                 sccm.sendShowScoreSetting(event.isOn)
+                _isPersistBtnEnabled.value = true
             }
             is SettingsViewModelEvent.ShowTimeChangedEvent -> {
                 sccm.sendShowTimeSetting(event.isOn)
+                _isPersistBtnEnabled.value = true
             }
             is SettingsViewModelEvent.TextViewBehaviourChangedEvent -> {
                 sccm.sendScrollSetting(event.behaviour == TextViewBehaviour.SCROLL)
+                _isPersistBtnEnabled.value = true
             }
             is SettingsViewModelEvent.PersistSettingsEvent -> {
                 sccm.sendPersistConfig(event.config)

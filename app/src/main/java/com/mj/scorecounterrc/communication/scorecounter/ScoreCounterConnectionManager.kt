@@ -174,6 +174,8 @@ class ScoreCounterConnectionManager @Inject constructor(
                                 }
                             }
                         }
+                    } else if (msg.startsWith(Constants.CFG_PERSIST_ACK_CMD)) {
+                        listeners.forEach { it.get()?.onSentCfgAck?.invoke() }
                     }
                     // Reset the buffer
                     msgBuffer = ""

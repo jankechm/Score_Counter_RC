@@ -7,8 +7,6 @@ class Constants {
         const val BT_PERMISSIONS_REQUEST_CODE = 1
         const val NOTIFICATIONS_PERMISSIONS_REQUEST_CODE = 2
 
-        const val ALREADY_CONNECTED_PARAM = "already_connected"
-
         const val SCAN_PERIOD: Long = 7000
 
         const val MAX_CONNECT_ATTEMPTS = 4
@@ -34,6 +32,7 @@ class Constants {
         const val PERSIST_CONFIG_CMD_PREFIX = "PERSIST_CONFIG="
         const val GET_CONFIG_CMD = "GET_CONFIG"
         const val CONFIG_CMD_PREFIX = "CONFIG="
+        const val CFG_PERSIST_ACK_CMD = "CFG_PERSIST_ACK"
         const val CRLF = "\r\n"
 
         const val MIN_SCORE = 0
