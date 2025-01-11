@@ -20,13 +20,15 @@ import com.mj.scorecounterrc.viewmodel.SettingsViewModel
 fun SettingsRadioRow(
     onEvent: (event: SettingsViewModel.SettingsViewModelEvent) -> Unit,
     selectedTextViewBehaviour: MutableState<SettingsViewModel.TextViewBehaviour>,
-    textViewBehaviour: SettingsViewModel.TextViewBehaviour
+    textViewBehaviour: SettingsViewModel.TextViewBehaviour,
+    enabled: Boolean
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .height(60.dp)
             .selectable(
+                enabled = enabled,
                 selected =
                 selectedTextViewBehaviour.value == textViewBehaviour,
                 onClick = {
@@ -41,6 +43,7 @@ fun SettingsRadioRow(
             )
     ) {
         RadioButton(
+            enabled = enabled,
             selected = selectedTextViewBehaviour.value == textViewBehaviour,
             onClick = null // The row handles onClick
         )

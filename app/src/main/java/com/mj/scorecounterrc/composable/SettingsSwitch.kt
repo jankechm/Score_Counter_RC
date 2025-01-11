@@ -16,10 +16,12 @@ fun SettingsSwitch(
     onEvent: (event: SettingsViewModel.SettingsViewModelEvent) -> Unit,
     isChecked: MutableState<Boolean>,
     switchType: SwitchType,
+    enabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Switch(
         modifier = modifier,
+        enabled = enabled,
         checked = isChecked.value,
         onCheckedChange = {
             isChecked.value = it

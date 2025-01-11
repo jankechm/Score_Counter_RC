@@ -33,6 +33,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mj.scorecounterrc.data.model.ScoreCounterCfg
 import com.mj.scorecounterrc.ui.theme.SaveSettingsButtonContainerClr
+import com.mj.scorecounterrc.viewmodel.ConnectionViewModel
+import com.mj.scorecounterrc.viewmodel.ConnectionViewModel.ConnectionState
 import com.mj.scorecounterrc.viewmodel.SettingsViewModel
 import com.mj.scorecounterrc.viewmodel.SettingsViewModel.SettingsViewModelEvent
 import com.mj.scorecounterrc.viewmodel.SettingsViewModel.TextViewBehaviour
@@ -40,11 +42,14 @@ import com.mj.scorecounterrc.viewmodel.SettingsViewModel.TextViewBehaviour
 @Composable
 fun SettingsScreenRoot(navigateBack: () -> Unit) {
     val settingsViewModel = hiltViewModel<SettingsViewModel>()
+    val connectionViewModel = hiltViewModel<ConnectionViewModel>()
+
     val loadedSettings = settingsViewModel.loadedSettings.collectAsStateWithLifecycle()
     val isPersistBtnEnabled = settingsViewModel.isPersistBtnEnabled.collectAsStateWithLifecycle()
+    val connectionState = connectionViewModel.connectionState.collectAsStateWithLifecycle()
     val onEvent = settingsViewModel::onEvent
 
-    SettingsScreen(navigateBack, loadedSettings, isPersistBtnEnabled, onEvent)
+    SettingsScreen(navigateBack, loadedSettings, isPersistBtnEnabled, connectionState, onEvent)
 }
 
 @SuppressLint("UnrememberedMutableState")
@@ -55,6 +60,7 @@ fun SettingsScreenPreview() {
         onEvent = {},
         loadedSettings = mutableStateOf(ScoreCounterCfg()),
         isPersistBtnEnabled = mutableStateOf(false),
+        connectionState = mutableStateOf(ConnectionState.NOT_CONNECTED),
         navigateBack = {}
     )
 }
@@ -64,6 +70,7 @@ fun SettingsScreen(
     navigateBack: () -> Unit,
     loadedSettings: State<ScoreCounterCfg>,
     isPersistBtnEnabled: State<Boolean>,
+    connectionState: State<ConnectionState>,
     onEvent: (event: SettingsViewModelEvent) -> Unit
 ) {
     val minBrightness = 0f
@@ -104,6 +111,7 @@ fun SettingsScreen(
                     Text(text = "Brightness")
                     Spacer(modifier = Modifier.size(10.dp))
                     Slider(
+                        enabled = connectionState.value == ConnectionState.CONNECTED,
                         value = sliderPosition,
                         onValueChange = {
                             sliderPosition = it
@@ -148,6 +156,7 @@ fun SettingsScreen(
                                     onEvent = onEvent,
                                     isChecked = useScore,
                                     switchType = SwitchType.SHOW_SCORE,
+                                    enabled = connectionState.value == ConnectionState.CONNECTED,
                                 )
                             }
                             Box(
@@ -159,6 +168,7 @@ fun SettingsScreen(
                                     onEvent = onEvent,
                                     isChecked = useTime,
                                     switchType = SwitchType.SHOW_TIME,
+                                    enabled = connectionState.value == ConnectionState.CONNECTED,
                                 )
                             }
                         }
@@ -168,10 +178,18 @@ fun SettingsScreen(
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         SettingsRadioRow(
-                            onEvent, selectedTextViewBehaviour, TextViewBehaviour.ALTERNATE)
+                            onEvent = onEvent,
+                            selectedTextViewBehaviour = selectedTextViewBehaviour,
+                            textViewBehaviour = TextViewBehaviour.ALTERNATE,
+                            enabled = connectionState.value == ConnectionState.CONNECTED,
+                        )
                         Spacer(modifier = Modifier.size(20.dp))
                         SettingsRadioRow(
-                            onEvent, selectedTextViewBehaviour, TextViewBehaviour.SCROLL)
+                            onEvent = onEvent,
+                            selectedTextViewBehaviour = selectedTextViewBehaviour,
+                            textViewBehaviour = TextViewBehaviour.SCROLL,
+                            enabled = connectionState.value == ConnectionState.CONNECTED,
+                        )
                     }
 
                     Spacer(modifier = Modifier.weight(1f))
