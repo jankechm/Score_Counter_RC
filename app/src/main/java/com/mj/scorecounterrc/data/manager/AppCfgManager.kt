@@ -16,13 +16,18 @@ class AppCfgManager @Inject constructor(
     private val _appCfg = MutableStateFlow(AppCfg())
     val appCfg: StateFlow<AppCfg> = _appCfg.asStateFlow()
 
+    private val _isPersisted = MutableStateFlow(true)
+    val isPersisted: StateFlow<Boolean> = _isPersisted.asStateFlow()
 
-    fun updateAppCfg(appCfg: AppCfg) {
+
+    fun setAppCfg(appCfg: AppCfg) {
         _appCfg.update { appCfg.copy() }
+        _isPersisted.update { false }
     }
 
     fun setAutoConnectOnStart(autoConnectOnStart: Boolean) {
         _appCfg.update { it.copy(autoConnectOnStart = autoConnectOnStart) }
+        _isPersisted.update { false }
     }
 
     fun loadPersistedAppCfg() {
@@ -32,6 +37,7 @@ class AppCfgManager @Inject constructor(
 
     fun persistAppCfg() {
         storageManager.saveAutoConnectOnStartup(_appCfg.value.autoConnectOnStart)
+        _isPersisted.update { true }
     }
 
 }

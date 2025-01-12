@@ -17,7 +17,6 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -54,18 +53,20 @@ fun SettingsScreenRoot(navigateBack: () -> Unit) {
     val settingsViewModel = hiltViewModel<SettingsViewModel>()
     val connectionViewModel = hiltViewModel<ConnectionViewModel>()
 
-    val loadedScSettings = settingsViewModel.loadedScSettings.collectAsStateWithLifecycle()
-    val isScPersistBtnEnabled = settingsViewModel.isScPersistBtnEnabled.collectAsStateWithLifecycle()
+    val scCfg = settingsViewModel.scCfg.collectAsStateWithLifecycle()
+    val isScCfgPersisted = settingsViewModel.isScCfgPersisted.collectAsStateWithLifecycle()
     val connectionState = connectionViewModel.connectionState.collectAsStateWithLifecycle()
     val appCfg = settingsViewModel.appCfg.collectAsStateWithLifecycle()
+    val isAppCfgPersisted = settingsViewModel.isAppCfgPersisted.collectAsStateWithLifecycle()
     val onEvent = settingsViewModel::onEvent
 
     SettingsScreen(
         navigateBack,
-        loadedScSettings,
-        isScPersistBtnEnabled,
+        scCfg,
+        isScCfgPersisted,
         connectionState,
         appCfg,
+        isAppCfgPersisted,
         onEvent
     )
 }
@@ -76,10 +77,11 @@ fun SettingsScreenRoot(navigateBack: () -> Unit) {
 fun SettingsScreenPreview() {
     SettingsScreen(
         onEvent = {},
-        loadedScSettings = mutableStateOf(ScoreCounterCfg()),
-        isScPersistBtnEnabled = mutableStateOf(false),
+        scCfg = mutableStateOf(ScoreCounterCfg()),
+        isScCfgPersisted = mutableStateOf(true),
         connectionState = mutableStateOf(ConnectionState.NOT_CONNECTED),
         appCfg = mutableStateOf(AppCfg()),
+        isAppCfgPersisted = mutableStateOf(true),
         navigateBack = {}
     )
 }
@@ -87,10 +89,11 @@ fun SettingsScreenPreview() {
 @Composable
 fun SettingsScreen(
     navigateBack: () -> Unit,
-    loadedScSettings: State<ScoreCounterCfg>,
-    isScPersistBtnEnabled: State<Boolean>,
+    scCfg: State<ScoreCounterCfg>,
+    isScCfgPersisted: State<Boolean>,
     connectionState: State<ConnectionState>,
     appCfg: State<AppCfg>,
+    isAppCfgPersisted: State<Boolean>,
     onEvent: (event: SettingsViewModelEvent) -> Unit
 ) {
 
@@ -126,13 +129,14 @@ fun SettingsScreen(
                 ) {
                     when (selectedTab) {
                         TabScreen.ScoreCounter -> ScoreCounterSettings(
-                            loadedScSettings = loadedScSettings,
-                            isScPersistBtnEnabled = isScPersistBtnEnabled,
+                            scCfg = scCfg,
+                            isScCfgPersisted = isScCfgPersisted,
                             connectionState = connectionState,
                             onEvent = onEvent
                         )
                         TabScreen.AppSettings -> AppSettings(
                             appCfg = appCfg,
+                            isAppCfgPersisted = isAppCfgPersisted,
                             onEvent = onEvent
                         )
                     }
@@ -144,32 +148,28 @@ fun SettingsScreen(
 
 @Composable
 fun ScoreCounterSettings(
-    loadedScSettings: State<ScoreCounterCfg>,
-    isScPersistBtnEnabled: State<Boolean>,
+    scCfg: State<ScoreCounterCfg>,
+    isScCfgPersisted: State<Boolean>,
     connectionState: State<ConnectionState>,
     onEvent: (event: SettingsViewModelEvent) -> Unit
 ) {
     val minBrightness = 0f
     val maxBrightness = 15f
 
-    var sliderPosition by rememberSaveable(loadedScSettings.value.brightness) {
-        mutableFloatStateOf(loadedScSettings.value.brightness.toFloat())
+    var sliderPosition by rememberSaveable(scCfg.value.brightness) {
+        mutableFloatStateOf(scCfg.value.brightness.toFloat())
     }
-    val useScore = rememberSaveable(loadedScSettings.value.useScore) {
-        mutableStateOf(loadedScSettings.value.useScore)
+    val useScore = rememberSaveable(scCfg.value.useScore) {
+        mutableStateOf(scCfg.value.useScore)
     }
-    val useTime = rememberSaveable(loadedScSettings.value.useTime) {
-        mutableStateOf(loadedScSettings.value.useTime)
+    val useTime = rememberSaveable(scCfg.value.useTime) {
+        mutableStateOf(scCfg.value.useTime)
     }
-    val selectedTextViewBehaviour = rememberSaveable(loadedScSettings.value.scroll) {
+    val selectedTextViewBehaviour = rememberSaveable(scCfg.value.scroll) {
         mutableStateOf(
-            if (loadedScSettings.value.scroll) TextViewBehaviour.SCROLL
+            if (scCfg.value.scroll) TextViewBehaviour.SCROLL
             else TextViewBehaviour.ALTERNATE
         )
-    }
-
-    LaunchedEffect(true) {
-        onEvent(SettingsViewModelEvent.RequestLoadScConfigEvent)
     }
 
     Column {
@@ -268,17 +268,9 @@ fun ScoreCounterSettings(
             contentAlignment = Alignment.Center
         ) {
             Button(
-                enabled = isScPersistBtnEnabled.value,
+                enabled = !isScCfgPersisted.value,
                 onClick = {
-                    val config = ScoreCounterCfg()
-
-                    config.brightness = sliderPosition.toInt()
-                    config.useScore = useScore.value
-                    config.useTime = useTime.value
-                    config.scroll =
-                        selectedTextViewBehaviour.value == TextViewBehaviour.SCROLL
-
-                    onEvent(SettingsViewModelEvent.PersistScSettingsEvent(config))
+                    onEvent(SettingsViewModelEvent.PersistScSettingsEvent)
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = SaveSettingsButtonContainerClr,
@@ -297,13 +289,12 @@ fun ScoreCounterSettings(
 @Composable
 fun AppSettings(
     appCfg: State<AppCfg>,
+    isAppCfgPersisted: State<Boolean>,
     onEvent: (event: SettingsViewModelEvent) -> Unit = {},
 ) {
     val isAutoConnectOn = rememberSaveable {
         mutableStateOf(appCfg.value.autoConnectOnStart)
     }
-
-    var isPersistBtnEnabled by rememberSaveable { mutableStateOf(false) }
 
     Column {
         Text(text = "Auto-connect to Score Counter when app starts")
@@ -311,7 +302,6 @@ fun AppSettings(
         SettingsSwitch(
             onChange = { isOn ->
                 onEvent(SettingsViewModelEvent.AutoConnectOnStartupChangedEvent(isOn))
-                isPersistBtnEnabled = true
             },
             isChecked = isAutoConnectOn,
             enabled = true,
@@ -326,10 +316,9 @@ fun AppSettings(
             contentAlignment = Alignment.Center
         ) {
             Button(
-                enabled = isPersistBtnEnabled,
+                enabled = !isAppCfgPersisted.value,
                 onClick = {
                     onEvent(SettingsViewModelEvent.PersistAppCfgEvent)
-                    isPersistBtnEnabled = false
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = SaveSettingsButtonContainerClr,

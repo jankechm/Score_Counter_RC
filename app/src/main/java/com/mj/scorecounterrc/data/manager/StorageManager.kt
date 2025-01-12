@@ -1,6 +1,7 @@
 package com.mj.scorecounterrc.data.manager
 
 import android.content.Context
+import com.mj.scorecounterrc.data.model.AppCfg
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -98,6 +99,6 @@ class StorageManager @Inject constructor(
 
     fun getAutoConnectOnStartup(): Boolean {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getBoolean(PREF_AUTO_CONNECT_ON_STARTUP, false)
+        return prefs.getBoolean(PREF_AUTO_CONNECT_ON_STARTUP, AppCfg().autoConnectOnStart)
     }
 }
