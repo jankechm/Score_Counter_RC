@@ -20,13 +20,24 @@ class ScoreCounterCfgManager @Inject constructor(
     private val _isPersisted = MutableStateFlow(true)
     val isPersisted: StateFlow<Boolean> = _isPersisted.asStateFlow()
 
+    private var isScCfgLoaded = false
+
 
     private val sccmListener by lazy {
         SCCMListener().apply {
             onCfgReceived = { cfg ->
                 _scCfg.value = cfg
+                isScCfgLoaded = true
             }
-            onSentCfgAck = { _isPersisted.value = true }
+            onSentCfgAck = {
+                _isPersisted.value = true
+            }
+            onMtuChanged = {
+                loadScCfg()
+            }
+            onDisconnect = {
+                isScCfgLoaded = false
+            }
         }
     }
 
@@ -60,8 +71,10 @@ class ScoreCounterCfgManager @Inject constructor(
         _isPersisted.value = false
     }
 
-    fun loadPersistedScCfg() {
-        sccm.sendGetConfigRequest()
+    fun loadScCfg() {
+        if (!isScCfgLoaded) {
+            sccm.sendGetConfigRequest()
+        }
     }
 
     fun persistScCfg() {

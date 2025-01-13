@@ -20,7 +20,6 @@ import com.mj.scorecounterrc.ble.ConnectionManager
 import com.mj.scorecounterrc.ble.ConnectionManager.isConnected
 import com.mj.scorecounterrc.broadcastreceiver.BtStateChangedReceiver
 import com.mj.scorecounterrc.communication.scorecounter.listener.SCCMListener
-import com.mj.scorecounterrc.data.manager.ScoreCounterCfgManager
 import com.mj.scorecounterrc.data.manager.StorageManager
 import com.mj.scorecounterrc.data.model.Score
 import com.mj.scorecounterrc.data.model.ScoreCounterCfg
@@ -51,7 +50,6 @@ class ScoreCounterConnectionManager @Inject constructor(
     @ApplicationContext private var context: Context,
     private val scoreSync: Provider<ScoreSync>,
     private val storageManager: StorageManager,
-    private val scCfgManager: Provider<ScoreCounterCfgManager>,
 ) : ScoreCounterMessageSender {
 
     private val btAdapter: BluetoothAdapter? = context.getSystemService(BluetoothManager::class.java)
@@ -108,8 +106,7 @@ class ScoreCounterConnectionManager @Inject constructor(
                 // Trigger new sync
                 scoreSync.get().trySync()
 
-                // Load Score Counter config from the Score Counter device
-                scCfgManager.get().loadPersistedScCfg()
+                listeners.forEach { it.get()?.onMtuChanged?.invoke() }
             }
             onNotificationsEnabled = { _,_ -> Timber.i( "Enabled notification") }
             onDisconnect = { bleDevice ->
@@ -118,6 +115,8 @@ class ScoreCounterConnectionManager @Inject constructor(
                 if (!manuallyDisconnected) {
                     startReconnectionCoroutine()
                 }
+
+                listeners.forEach { it.get()?.onDisconnect?.invoke() }
 
                 context.let {
                     handler.post {

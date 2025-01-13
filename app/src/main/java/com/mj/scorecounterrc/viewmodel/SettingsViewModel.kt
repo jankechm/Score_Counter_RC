@@ -45,6 +45,9 @@ class SettingsViewModel @Inject constructor(
             is SettingsViewModelEvent.PersistAppCfgEvent -> {
                 appCfgManager.persistAppCfg()
             }
+            SettingsViewModelEvent.LoadScoreCounterCfgEvent -> {
+                scCfgManager.loadScCfg()
+            }
         }
     }
 
@@ -57,6 +60,7 @@ class SettingsViewModel @Inject constructor(
             val behaviour: TextViewBehaviour) : SettingsViewModelEvent
         data object PersistScSettingsEvent : SettingsViewModelEvent
         data object PersistAppCfgEvent : SettingsViewModelEvent
+        data object LoadScoreCounterCfgEvent : SettingsViewModelEvent
     }
 
     sealed class SettingsViewModelSwitchEvent(open var isOn: Boolean) : SettingsViewModelEvent

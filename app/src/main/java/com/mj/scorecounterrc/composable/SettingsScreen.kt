@@ -17,6 +17,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -170,6 +171,10 @@ fun ScoreCounterSettings(
             if (scCfg.value.scroll) TextViewBehaviour.SCROLL
             else TextViewBehaviour.ALTERNATE
         )
+    }
+
+    LaunchedEffect(true) {
+        onEvent(SettingsViewModelEvent.LoadScoreCounterCfgEvent)
     }
 
     Column {
