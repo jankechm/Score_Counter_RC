@@ -20,6 +20,7 @@ import com.mj.scorecounterrc.ble.ConnectionManager
 import com.mj.scorecounterrc.ble.ConnectionManager.isConnected
 import com.mj.scorecounterrc.broadcastreceiver.BtStateChangedReceiver
 import com.mj.scorecounterrc.communication.scorecounter.listener.SCCMListener
+import com.mj.scorecounterrc.data.manager.AppCfgManager
 import com.mj.scorecounterrc.data.manager.StorageManager
 import com.mj.scorecounterrc.data.model.Score
 import com.mj.scorecounterrc.data.model.ScoreCounterCfg
@@ -50,6 +51,7 @@ class ScoreCounterConnectionManager @Inject constructor(
     @ApplicationContext private var context: Context,
     private val scoreSync: Provider<ScoreSync>,
     private val storageManager: StorageManager,
+    private val appCfgManager: AppCfgManager
 ) : ScoreCounterMessageSender {
 
     private val btAdapter: BluetoothAdapter? = context.getSystemService(BluetoothManager::class.java)
@@ -197,7 +199,9 @@ class ScoreCounterConnectionManager @Inject constructor(
                     if (bleScoreCounter != null) {
                         startReconnectionCoroutine()
                     } else {
-                        startConnectionToPersistedDeviceCoroutine()
+                        if (appCfgManager.appCfg.value.autoConnectOnStart) {
+                            startConnectionToPersistedDeviceCoroutine()
+                        }
                     }
                 }
             }
