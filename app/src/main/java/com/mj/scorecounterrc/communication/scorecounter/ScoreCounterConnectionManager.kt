@@ -318,7 +318,7 @@ class ScoreCounterConnectionManager @Inject constructor(
                 ConnectionManager.writeCharacteristic(
                     bleScoreCounter!!,
                     writableDisplayChar!!,
-                    message.toByteArray(Charsets.US_ASCII)
+                    (message + Constants.CRLF).toByteArray(Charsets.US_ASCII)
                 )
 
                 isSent = true
@@ -335,51 +335,46 @@ class ScoreCounterConnectionManager @Inject constructor(
     private fun sendDayTimeToScoreCounter(): Boolean {
         val currDateTime = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("e d.M.yy H:m:s")
-        val message = Constants.SET_TIME_CMD_PREFIX + currDateTime.format(formatter) +
-                Constants.CRLF
+        val message = Constants.SET_TIME_CMD_PREFIX + currDateTime.format(formatter)
 
-        Timber.i(Constants.SET_TIME_CMD_PREFIX + currDateTime.format(formatter))
+        Timber.i(message)
 
         return sendMsgToScoreCounter(message)
     }
 
     fun sendScoreToScoreCounter(score: Score, timestamp: Long): Boolean {
-        val message = Constants.SET_SCORE_CMD_PREFIX +
-                "${score.left}:${score.right}T$timestamp${Constants.CRLF}"
-
+        val message = "${Constants.SET_SCORE_CMD_PREFIX}${score.left}:${score.right}T$timestamp"
         return sendMsgToScoreCounter(message)
     }
 
     fun sendGetConfigRequest(): Boolean {
-        val message = "${Constants.GET_CONFIG_CMD}${Constants.CRLF}"
-        return sendMsgToScoreCounter(message)
+        return sendMsgToScoreCounter(Constants.GET_CONFIG_CMD)
     }
 
     fun sendSyncRequestToScoreCounter(): Boolean {
-        val message = "${Constants.GET_SCORE_CMD}${Constants.CRLF}"
-        return sendMsgToScoreCounter(message)
+        return sendMsgToScoreCounter(Constants.GET_SCORE_CMD)
     }
 
     fun sendShowScoreSetting(showScore: Boolean): Boolean {
         val showScoreVal = if (showScore) 1 else 0
-        val message = "${Constants.SET_SHOW_SCORE_CMD_PREFIX}$showScoreVal${Constants.CRLF}"
+        val message = "${Constants.SET_SHOW_SCORE_CMD_PREFIX}$showScoreVal"
         return sendMsgToScoreCounter(message)
     }
 
     fun sendShowTimeSetting(showTime: Boolean): Boolean {
         val showTimeVal = if (showTime) 1 else 0
-        val message = "${Constants.SET_SHOW_TIME_CMD_PREFIX}$showTimeVal${Constants.CRLF}"
+        val message = "${Constants.SET_SHOW_TIME_CMD_PREFIX}$showTimeVal"
         return sendMsgToScoreCounter(message)
     }
 
     fun sendScrollSetting(scroll: Boolean): Boolean {
         val scrollVal = if (scroll) 1 else 0
-        val message = "${Constants.SET_SCROLL_CMD_PREFIX}$scrollVal${Constants.CRLF}"
+        val message = "${Constants.SET_SCROLL_CMD_PREFIX}$scrollVal"
         return sendMsgToScoreCounter(message)
     }
 
     fun sendBrightnessSetting(brightness: Int): Boolean {
-        val message = "${Constants.SET_BRIGHTNESS_CMD_PREFIX}$brightness${Constants.CRLF}"
+        val message = "${Constants.SET_BRIGHTNESS_CMD_PREFIX}$brightness"
         return sendMsgToScoreCounter(message)
     }
 
@@ -387,13 +382,12 @@ class ScoreCounterConnectionManager @Inject constructor(
         val json = Json { encodeDefaults = true }
         val jsonStr = json.encodeToString(config)
 
-        val message = "${Constants.PERSIST_CONFIG_CMD_PREFIX}$jsonStr${Constants.CRLF}"
+        val message = "${Constants.PERSIST_CONFIG_CMD_PREFIX}$jsonStr"
         return sendMsgToScoreCounter(message)
     }
 
     fun sendDisconnectRequest(): Boolean {
-        val message = "${Constants.DISCONNECT_CMD}${Constants.CRLF}"
-        return sendMsgToScoreCounter(message)
+        return sendMsgToScoreCounter(Constants.DISCONNECT_CMD)
     }
 
     @SuppressLint("MissingPermission")
