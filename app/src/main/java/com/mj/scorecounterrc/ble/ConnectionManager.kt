@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
  */
 object ConnectionManager {
 
-    const val TIMEOUT_CONNECT_MS = 1000L
+    const val TIMEOUT_CONNECT_MS = 2000L
     const val TIMEOUT_MTU_REQUEST_MS = 1000L
     const val TIMEOUT_DISCONNECT_MS = 1000L
     const val TIMEOUT_CHAR_WRITE_MS = 500L
@@ -58,7 +58,7 @@ object ConnectionManager {
             listeners.add(WeakReference(listener))
             listeners.removeIf { it.get() == null }
 
-            Timber.d("Added a listener, ${listeners.size} listeners total")
+            Timber.d("Added a ConnectionEventListener, ${listeners.size} listeners total")
         }
     }
 
@@ -406,13 +406,19 @@ object ConnectionManager {
             when (status) {
                 BluetoothGatt.GATT_SUCCESS -> {
                     if (newState == BluetoothProfile.STATE_CONNECTED) {
-                        Timber.i("onConnectionStateChange: connected " +
-                                "to $deviceAddress")
-                        deviceGattMap[device] = gatt
-                        deviceConnectAttemptsMap.remove(device)
-                        listeners.forEach { it.get()?.onConnect?.invoke(device) }
-                        handler.post {
-                            gatt.discoverServices()
+                        if (deviceGattMap[device] != null) {
+                            Timber.w("Already connected to $deviceAddress!")
+                            gatt.disconnect()
+                            gatt.close()
+                        } else {
+                            Timber.i("onConnectionStateChange: connected " +
+                                    "to $deviceAddress")
+                            deviceGattMap[device] = gatt
+                            deviceConnectAttemptsMap.remove(device)
+                            listeners.forEach { it.get()?.onConnect?.invoke(device) }
+                            handler.post {
+                                gatt.discoverServices()
+                            }
                         }
                     } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                         Timber.i("onConnectionStateChange: disconnected " +

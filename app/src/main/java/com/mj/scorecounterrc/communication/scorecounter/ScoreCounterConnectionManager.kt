@@ -1,18 +1,15 @@
 package com.mj.scorecounterrc.communication.scorecounter
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothManager
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import com.mj.scorecounterrc.Constants
 import com.mj.scorecounterrc.ScoreSync
 import com.mj.scorecounterrc.ble.Connect
@@ -120,13 +117,10 @@ class ScoreCounterConnectionManager @Inject constructor(
 
                 listeners.forEach { it.get()?.onDisconnect?.invoke() }
 
-                context.let {
-                    handler.post {
-                        Toast.makeText(
-                            context,
-                            "Disconnected from ${bleDevice.address}", Toast.LENGTH_SHORT)
-                            .show()
-                    }
+                handler.post {
+                    Toast.makeText(
+                        context,"Disconnected from ${bleDevice.address}", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
             onCharacteristicChanged = { _, _, value ->
@@ -242,16 +236,16 @@ class ScoreCounterConnectionManager @Inject constructor(
                 }
 
             if (savedDevice != null) {
-                if (ActivityCompat.checkSelfPermission(
-                        context, Manifest.permission.BLUETOOTH_CONNECT
-                    ) == PackageManager.PERMISSION_GRANTED &&
-                    savedDevice.bondState == BluetoothDevice.BOND_BONDED) {
+//                if (ActivityCompat.checkSelfPermission(
+//                        context, Manifest.permission.BLUETOOTH_CONNECT
+//                    ) == PackageManager.PERMISSION_GRANTED &&
+//                    savedDevice.bondState == BluetoothDevice.BOND_BONDED) {
                     applicationScope.launch(Dispatchers.IO) {
                         tryConnect(savedDevice, ReconnectionType.PERSISTED_DEVICE)
                     }
-                } else {
-                    Timber.i( "Last BLE device was not bonded, auto-connection canceled!")
-                }
+//                } else {
+//                    Timber.i( "Last BLE device was not bonded, auto-connection canceled!")
+//                }
             }
         }
     }
@@ -397,9 +391,16 @@ class ScoreCounterConnectionManager @Inject constructor(
         return sendMsgToScoreCounter(message)
     }
 
+    fun sendDisconnectRequest(): Boolean {
+        val message = "${Constants.DISCONNECT_CMD}${Constants.CRLF}"
+        return sendMsgToScoreCounter(message)
+    }
+
     @SuppressLint("MissingPermission")
     fun handleBonding(btDevice: BluetoothDevice) {
-        btDevice.createBond()
+        if (appCfgManager.appCfg.value.askToBond) {
+            btDevice.createBond()
+        }
     }
 
     fun isBleScoreCounterConnected(): Boolean {
@@ -420,6 +421,7 @@ class ScoreCounterConnectionManager @Inject constructor(
 
     fun disconnect() {
         manuallyDisconnected = true
+        sendDisconnectRequest()
         ConnectionManager.disconnectAllDevices()
     }
 

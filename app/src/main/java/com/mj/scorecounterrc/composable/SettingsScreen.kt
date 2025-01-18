@@ -300,6 +300,9 @@ fun AppSettings(
     val isAutoConnectOn = rememberSaveable {
         mutableStateOf(appCfg.value.autoConnectOnStart)
     }
+    val isAskToBondOn = rememberSaveable {
+        mutableStateOf(appCfg.value.askToBond)
+    }
 
     Column {
         Text(text = "Auto-connect to Score Counter when app starts")
@@ -309,6 +312,18 @@ fun AppSettings(
                 onEvent(SettingsViewModelEvent.AutoConnectOnStartupChangedEvent(isOn))
             },
             isChecked = isAutoConnectOn,
+            enabled = true,
+        )
+
+        Spacer(modifier = Modifier.size(40.dp))
+
+        Text(text = "Ask to bond (pair) when connecting to Score Counter")
+        Spacer(modifier = Modifier.size(10.dp))
+        SettingsSwitch(
+            onChange = { isOn ->
+                onEvent(SettingsViewModelEvent.AskToBondChangedEvent(isOn))
+            },
+            isChecked = isAskToBondOn,
             enabled = true,
         )
 

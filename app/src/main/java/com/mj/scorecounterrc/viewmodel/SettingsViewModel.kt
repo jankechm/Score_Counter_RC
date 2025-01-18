@@ -36,6 +36,9 @@ class SettingsViewModel @Inject constructor(
             is SettingsViewModelEvent.AutoConnectOnStartupChangedEvent -> {
                 appCfgManager.setAutoConnectOnStart(event.isOn)
             }
+            is SettingsViewModelEvent.AskToBondChangedEvent -> {
+                appCfgManager.setAskToBond(event.isOn)
+            }
             is SettingsViewModelEvent.TextViewBehaviourChangedEvent -> {
                 scCfgManager.setScroll(event.behaviour == TextViewBehaviour.SCROLL)
             }
@@ -56,6 +59,7 @@ class SettingsViewModel @Inject constructor(
         data class ShowScoreChangedEvent(override var isOn: Boolean) : SettingsViewModelSwitchEvent(isOn)
         data class ShowTimeChangedEvent(override var isOn: Boolean) : SettingsViewModelSwitchEvent(isOn)
         data class AutoConnectOnStartupChangedEvent(override var isOn: Boolean) : SettingsViewModelSwitchEvent(isOn)
+        data class AskToBondChangedEvent(override var isOn: Boolean) : SettingsViewModelSwitchEvent(isOn)
         data class TextViewBehaviourChangedEvent(
             val behaviour: TextViewBehaviour) : SettingsViewModelEvent
         data object PersistScSettingsEvent : SettingsViewModelEvent

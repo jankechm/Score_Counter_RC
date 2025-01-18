@@ -75,6 +75,6 @@ class RcService : Service() {
 
     override fun onDestroy() {
         Timber.i("RcService stopped.")
-        Toast.makeText(this, "BleService stopped", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "RcService stopped", Toast.LENGTH_SHORT).show()
     }
 }

@@ -2,7 +2,7 @@ package com.mj.scorecounterrc
 
 class Constants {
     companion object {
-        const val BLE_DISPLAY_NAME = "Score-counter-BLE"
+        const val BLE_DISPLAY_NAME = "Score-Counter-BLE"
 
         const val BT_PERMISSIONS_REQUEST_CODE = 1
         const val NOTIFICATIONS_PERMISSIONS_REQUEST_CODE = 2
@@ -33,6 +33,7 @@ class Constants {
         const val GET_CONFIG_CMD = "GET_CONFIG"
         const val CONFIG_CMD_PREFIX = "CONFIG="
         const val CFG_PERSIST_ACK_CMD = "CFG_PERSIST_ACK"
+        const val DISCONNECT_CMD = "DISCONNECT"
         const val CRLF = "\r\n"
 
         const val MIN_SCORE = 0

@@ -30,13 +30,27 @@ class AppCfgManager @Inject constructor(
         _isPersisted.update { false }
     }
 
+    fun setAskToBond(askToBond: Boolean) {
+        _appCfg.update { it.copy(askToBond = askToBond) }
+        _isPersisted.update { false }
+    }
+
     fun loadPersistedAppCfg() {
         val autoConnectOnStart = storageManager.getAutoConnectOnStartup()
-        _appCfg.value = AppCfg(autoConnectOnStart = autoConnectOnStart)
+        val askToBond = storageManager.getAskToBond()
+
+        _appCfg.update {
+            AppCfg(
+                autoConnectOnStart = autoConnectOnStart,
+                askToBond = askToBond
+            )
+        }
     }
 
     fun persistAppCfg() {
         storageManager.saveAutoConnectOnStartup(_appCfg.value.autoConnectOnStart)
+        storageManager.saveAskToBond(_appCfg.value.askToBond)
+
         _isPersisted.update { true }
     }
 

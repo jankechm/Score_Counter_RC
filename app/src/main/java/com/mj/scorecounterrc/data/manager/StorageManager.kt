@@ -19,6 +19,7 @@ class StorageManager @Inject constructor(
         const val PREF_TIMESTAMP = "timestamp"
         const val PREF_IS_SC_OPPOSITE_TO_THE_REFEREE = "sc_opposite_to_referee"
         const val PREF_AUTO_CONNECT_ON_STARTUP = "auto_connect_on_startup"
+        const val PREF_ASK_TO_BOND = "ask_to_bond"
     }
 
     fun saveDeviceAddress(deviceAddress: String) {
@@ -100,5 +101,18 @@ class StorageManager @Inject constructor(
     fun getAutoConnectOnStartup(): Boolean {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return prefs.getBoolean(PREF_AUTO_CONNECT_ON_STARTUP, AppCfg().autoConnectOnStart)
+    }
+
+    fun saveAskToBond(askToBond: Boolean) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().apply {
+            putBoolean(PREF_ASK_TO_BOND, askToBond)
+            apply()
+        }
+    }
+
+    fun getAskToBond(): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(PREF_ASK_TO_BOND, AppCfg().askToBond)
     }
 }
