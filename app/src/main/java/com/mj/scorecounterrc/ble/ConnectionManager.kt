@@ -31,7 +31,7 @@ object ConnectionManager {
 
     const val TIMEOUT_CONNECT_MS = 2000L
     const val TIMEOUT_MTU_REQUEST_MS = 1000L
-    const val TIMEOUT_DISCONNECT_MS = 1000L
+    const val TIMEOUT_DISCONNECT_MS = 2000L
     const val TIMEOUT_CHAR_WRITE_MS = 500L
 
     private var listeners: MutableSet<WeakReference<ConnectionEventListener>> = ConcurrentHashMap.newKeySet()
